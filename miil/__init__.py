@@ -4,6 +4,7 @@ import os
 from scipy.sparse import csc_matrix
 from scipy.optimize import curve_fit
 
+from version import __version__
 
 default_system_shape = [2, 3, 8, 16, 2, 64]
 default_panel_sep = 64.262
