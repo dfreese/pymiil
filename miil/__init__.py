@@ -1,21 +1,20 @@
 import numpy as np
-import json
-import os
 from scipy.sparse import csc_matrix
 from scipy.optimize import curve_fit
 
-from version import __version__
-from defaults import *
-from types import *
-from io import *
-from mapping import *
-from position import *
+from miil.version import __version__
+from miil.defaults import *
+from miil.types import *
+from miil.io import *
+from miil.mapping import *
+from miil.position import *
+
 
 def tcal_coinc_events(
         events, tcal,
-        system_shape = default_system_shape,
-        uv_period_ns = 1024.41,
-        breast_daq_json_config = None):
+        system_shape=None,
+        uv_period_ns=1024.41,
+        breast_daq_json_config=None):
     '''
     Takes an array of eventcoinc_dtype events and applies a time calibration,
     making sure the dtf are then wrapped to the uv period in nanoseconds.  The
@@ -25,17 +24,21 @@ def tcal_coinc_events(
     calibration.
 
     Returned array is a copy of the original array.
+
+    default_system_shape is used if system_shape is None.
     '''
+    if system_shape is None:
+        system_shape = default_system_shape
 
     # If tcal is a string, load in that time calibration first.
-    if type(tcal) is str:
-        tcal = load_time_calibration(filename)
+    if isinstance(tcal, str):
+        tcal = load_time_calibration(tcal)
 
     idx0, idx1 = get_global_crystal_numbers(events, system_shape)
     ft0_offset = tcal['offset'][idx0] + \
-                 tcal['edep_offset'][idx0] * (events['E0'] - 511)
+        tcal['edep_offset'][idx0] * (events['E0'] - 511)
     ft1_offset = tcal['offset'][idx1] + \
-                 tcal['edep_offset'][idx1] * (events['E1'] - 511)
+        tcal['edep_offset'][idx1] * (events['E1'] - 511)
     cal_events = events.copy()
     cal_events['dtf'] -= ft0_offset
     cal_events['dtf'] += ft1_offset
@@ -52,11 +55,12 @@ def tcal_coinc_events(
 
     return cal_events
 
+
 def create_listmode_data(
         events,
-        system_shape = default_system_shape,
-        panel_sep = default_panel_sep,
-        list_type = 0):
+        system_shape=default_system_shape,
+        panel_sep=default_panel_sep,
+        list_type=0):
     '''
     Creates an array of list mode data in either cudarecon_type0_vec_dtype or
     cudarecon_type1_vec_dtype from eventcoinc data by calling get_crystal_pos.
@@ -77,12 +81,13 @@ def create_listmode_data(
 
     lm_data = np.zeros(events.shape, dtype=dtype)
     lm_data['pos0'], lm_data['pos1'] = get_crystal_pos(
-            events, system_shape=system_shape, panel_sep=panel_sep)
+        events, system_shape=system_shape, panel_sep=panel_sep)
     return lm_data
 
+
 def create_listmode_from_vec(
-        vec, panel_sep = default_panel_sep,
-        system_shape = default_system_shape):
+        vec, panel_sep=default_panel_sep,
+        system_shape=default_system_shape):
     '''
     Creates an array of list mode data in cudarecon_type1_vec_dtype from
     a sparse column vector representing the counts on each lor.
@@ -104,11 +109,12 @@ def create_listmode_from_vec(
     lm_data['weight'] = vec.data.copy()
     return lm_data
 
+
 def create_listmode_from_lors(
         lors,
-        panel_sep = default_panel_sep,
-        system_shape = default_system_shape,
-        list_type = 0):
+        panel_sep=default_panel_sep,
+        system_shape=default_system_shape,
+        list_type=0):
     '''
     Creates an array of list mode data in cudarecon_type[0,1]_vec_dtype from
     an array of lor indices.  Calls get_lor_positions.
@@ -132,8 +138,9 @@ def create_listmode_from_lors(
 
     lm_data = np.zeros(lors.shape, dtype=dtype)
     lm_data['pos0'], lm_data['pos1'] = get_lor_positions(
-            lors, system_shape, panel_sep)
+        lors, system_shape, panel_sep)
     return lm_data
+
 
 def correct_resets(data, threshold=1.0e3):
     '''
@@ -161,6 +168,7 @@ def correct_resets(data, threshold=1.0e3):
     data['ct'] = np.cumsum(data['ct'])
     return data
 
+
 def save_sparse_csc(filename, array):
     '''
     Saves a csc_matrix to a file by writing out the individual 'data',
@@ -173,13 +181,14 @@ def save_sparse_csc(filename, array):
     array : csc_matrix
         Any scipy csc_matrix
     '''
-    np.savez(filename, data = array.data, indices=array.indices,
-             indptr = array.indptr, shape=array.shape)
+    np.savez(filename, data=array.data, indices=array.indices,
+             indptr=array.indptr, shape=array.shape)
+
 
 def load_sparse_csc(filename):
     '''
-    Loads a csc_matrix saved by save_sparse_csc.  Assumes filename is a npz file
-    containing 'data', 'indices', and 'indptr' arrays.
+    Loads a csc_matrix saved by save_sparse_csc.  Assumes filename is a npz
+    file containing 'data', 'indices', and 'indptr' arrays.
 
     Parameters
     ----------
@@ -193,7 +202,8 @@ def load_sparse_csc(filename):
     '''
     loader = np.load(filename)
     return csc_matrix((loader['data'], loader['indices'], loader['indptr']),
-                      shape = loader['shape'])
+                      shape=loader['shape'])
+
 
 def create_sparse_column_vector(data, size=None):
     '''
@@ -215,11 +225,12 @@ def create_sparse_column_vector(data, size=None):
     '''
     shape = None
     if size is not None:
-        shape=(int(size), 1)
+        shape = (int(size), 1)
     data.sort()
     return csc_matrix((np.ones((len(data),), dtype=float),
                        (data.astype(int), np.zeros((len(data),), dtype=int))
                       ), shape=shape)
+
 
 def gauss_function(x, a, mu, sigma):
     '''
@@ -244,12 +255,13 @@ def gauss_function(x, a, mu, sigma):
     '''
     return a * np.exp(-(x - mu)**2.0 / (2 * sigma**2))
 
+
 def fit_hist_gauss(n, edges):
     '''
     Takes the output of a histogram and fits a gaussian function to it.
     Scipy curve_fit is uses in combination with gauss_function to do a
-    non-linear fit.  The fit is initialize to the mean and variance of the given
-    data.
+    non-linear fit.  The fit is initialize to the mean and variance of the
+    given data.
 
     Parameters
     ----------
@@ -270,19 +282,21 @@ def fit_hist_gauss(n, edges):
     >>> popt = miil.fit_hist_gauss(n, edges)
     '''
     # find the centers of the bins
-    centers = (edges[1:] + edges[:-1])/2.0
-    # Then do a weighted average of the centers to initialize the estimate of the mean
+    centers = (edges[1:] + edges[:-1]) / 2.0
+    # Then do a weighted average of the centers to initialize the estimate of
+    # the mean
     mean = np.average(centers, weights=n)
     # Then do a weighted average to initialize the estimate of the variance
-    sigma = np.average((centers-mean)**2, weights=n)
+    sigma = np.average((centers - mean)**2, weights=n)
     p0 = [np.max(n), mean, sigma]
-    popt, pcov = curve_fit(gauss_function, centers, n, p0=p0)
+    popt, _ = curve_fit(gauss_function, centers, n, p0=p0)
     return popt
+
 
 def eval_gauss_over_range(popt, n=100, range=None, edges=None):
     '''
-    Evaluates a gaussian function over a range, traditionally from the optput of
-    fit_hist_gauss.
+    Evaluates a gaussian function over a range, traditionally from the output
+    of fit_hist_gauss.
 
     Parameters
     ----------
@@ -322,6 +336,7 @@ def eval_gauss_over_range(popt, n=100, range=None, edges=None):
     x = np.linspace(range_min, range_max, n)
     y = gauss_function(x, *popt)
     return x, y
+
 
 def main():
     return
