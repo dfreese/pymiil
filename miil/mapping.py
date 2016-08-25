@@ -226,15 +226,11 @@ def lor_to_slor(lors, slor_shape=None, system_shape=None):
     '''
     Breaks down an array of LOR indices and transforms them into SLOR indices.
     SLORs, or symmetric LORs, is a way of indicating LORs that see the same
-    attenuation and are rotationaly and/or translationally symmetric, assuming
-    a symmetric source.
+    attenuation and are reflectively, rotationally, translationally symmetric,
+    assuming a symmetric source.
 
     Slors are effecitvely addressed by their place in a five dimensional array.
-    [apd_sum][module_diff][fin_diff][crystal0][crystal1].
-
-    This does not fully exploit the symmetry for a module difference of 0, but
-    it is much easier to ignore this, rather than have SLOR indices that cannot
-    be generated, nor have a special case.
+    [fin_diff][near_x][x_diff][near_y][far_y].
 
     default_slor_shape is used if system_shape is None.
 
@@ -250,36 +246,69 @@ def lor_to_slor(lors, slor_shape=None, system_shape=None):
     crystals_per_module = np.prod(system_shape[4:])
     crystals_per_apd = system_shape[5]
 
-    cartridge0 = lors // no_crystal_per_panel
-    cartridge1 = lors % no_crystal_per_panel
+    crystal0 = lors // no_crystal_per_panel
+    crystal1 = lors % no_crystal_per_panel
 
-    apd0 = cartridge0 // crystals_per_apd
-    apd1 = cartridge1 // crystals_per_apd
-    apd_sum = (apd0 % system_shape[4]) + \
-              (apd1 % system_shape[4])
-    del apd0, apd1
-    slors = apd_sum * slor_shape[1]
-    del apd_sum
-
-    module0 = cartridge0 // crystals_per_module
-    module1 = cartridge1 // crystals_per_module
-    mod_diff = np.abs((module0 % system_shape[3]) -
-                      (module1 % system_shape[3]))
-    del module0, module1
-    slors = (slors + mod_diff) * slor_shape[2]
-    del mod_diff
-
-    fin0 = cartridge0 // crystals_per_fin
-    fin1 = cartridge1 // crystals_per_fin
+    fin0 = crystal0 // crystals_per_fin
+    fin1 = crystal1 // crystals_per_fin
     fin_diff = np.abs(fin0 - fin1)
     del fin0, fin1
-    slors = (slors + fin_diff) * slor_shape[3]
+    if (fin_diff >= slor_shape[0]).any():
+        raise ValueError("fin_diff out of range")
+    slors = fin_diff * slor_shape[1]
     del fin_diff
 
-    slors = (slors + (cartridge0 % crystals_per_apd)) * slor_shape[4]
-    del cartridge0
-    slors += (cartridge1 % crystals_per_apd)
-    del cartridge1
+    apd0 = (crystal0 // crystals_per_apd) % system_shape[4]
+    apd1 = (crystal1 // crystals_per_apd) % system_shape[4]
+
+    y_crystal_near = 7 - (crystal0 % 8) + 8 * apd0;
+    y_crystal_far = 7 - (crystal1 % 8) + 8 * apd1;
+    del apd0, apd1
+
+    x_local_crystal_near = (crystal0 % crystals_per_apd) // 8
+    x_local_crystal_far = 7 - (crystal1 % crystals_per_apd) // 8
+
+    module0 = (crystal0 // crystals_per_module) % system_shape[3]
+    module1 = (crystal1 // crystals_per_module) % system_shape[3]
+    x_crystal_near = 8 * module0 + x_local_crystal_near
+    x_crystal_far = 8 * module1 + x_local_crystal_far
+    del module0, module1
+
+    mirror_y = y_crystal_near > y_crystal_far
+    y_crystal_near[mirror_y], y_crystal_far[mirror_y] = \
+            y_crystal_far[mirror_y], y_crystal_near[mirror_y].copy()
+    x_crystal_near[mirror_y], x_crystal_far[mirror_y] = \
+            x_crystal_far[mirror_y], x_crystal_near[mirror_y].copy()
+    x_local_crystal_near[mirror_y] =  x_local_crystal_far[mirror_y]
+    del x_local_crystal_far
+
+    mirror_x = x_crystal_near > x_crystal_far
+    x_crystal_near[mirror_x] = 127 - x_crystal_near[mirror_x]
+    x_crystal_far[mirror_x] = 127 - x_crystal_far[mirror_x]
+    x_local_crystal_near[mirror_x] = 7 - x_local_crystal_near[mirror_x]
+
+    if (x_local_crystal_near >= slor_shape[1]).any():
+        raise ValueError("x_local_crystal_near out of range")
+    slors = (slors + x_local_crystal_near) * slor_shape[2]
+    del x_local_crystal_near
+
+    x_crystal_diff = x_crystal_far - x_crystal_near
+    del x_crystal_far, x_crystal_near
+
+    if (x_crystal_diff >= slor_shape[2]).any():
+        raise ValueError("x_crystal_diff out of range")
+    slors = (slors + x_crystal_diff) * slor_shape[3]
+    del x_crystal_diff
+
+    if (y_crystal_near >= slor_shape[3]).any():
+        raise ValueError("y_crystal_near out of range")
+    slors = (slors + y_crystal_near) * slor_shape[4]
+    del y_crystal_near
+
+    if (y_crystal_far >= slor_shape[4]).any():
+        raise ValueError("y_crystal_far out of range")
+    slors += y_crystal_far
+    del y_crystal_far
     return slors
 
 
