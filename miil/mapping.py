@@ -222,6 +222,28 @@ def get_modules_from_lor(lors, system_shape=None):
     return module0, module1
 
 
+def crystals_to_lor(crystal0, crystal1, system_shape=None, local_id=False):
+    '''
+    Converts two crystal indices to an lor number.  If local_id is False
+    (default), it assumes the crystals are globablly indexed.  If True, it
+    assumes they're indexed local to the panel.
+
+    Lors are calculated as follows:
+        lor = panel_crystal0 * no_crystals_per_panel + panel_crystal1
+
+    default_slor_shape is used if system_shape is None.
+    '''
+    if system_shape is None:
+        system_shape = default_system_shape
+    no_crystals_per_panel = np.prod(system_shape[1:])
+    crystal0 = np.asarray(crystal0)
+    crystal1 = np.asarray(crystal1)
+    if not local_id:
+        crystal1 -= no_crystals_per_panel
+    lor = crystal0 * no_crystals_per_panel + crystal1
+    return lor
+
+
 def lor_to_slor(lors, slor_shape=None, system_shape=None):
     '''
     Breaks down an array of LOR indices and transforms them into SLOR indices.
