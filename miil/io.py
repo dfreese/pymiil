@@ -46,6 +46,19 @@ def write_cuda_vox(image, filename, magic_number=65531, version_number=1):
         image.swapaxes(1, 2).astype(np.float32).tofile(fid)
 
 
+def load_cuda_vox_shape(filename):
+    '''
+    Takes a cuda vox image file and loads the shape (X,Y,Z) of the image from
+    the cuda vox header.
+
+    '''
+    fid = open(filename, 'rb')
+    header = np.fromfile(fid, dtype=cuda_vox_file_header_dtype, count=1)[0]
+    fid.close()
+    image_shape = (header['size'][0], header['size'][2], header['size'][1])
+    return image_shape
+
+
 def load_amide(filename, size):
     '''
     Loads an amide image file of size (X, Y, Z).
