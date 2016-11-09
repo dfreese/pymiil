@@ -296,6 +296,51 @@ def fit_hist_gauss(n, edges, p0=None):
     return popt
 
 
+def bootstrap_gauss_fit(data, n, bins, range=None):
+    """
+    Take points from data, split them into n groups randomly, then histogram
+    them across range with bins number of bins.
+
+    Parameters
+    ----------
+    data : ndarray
+        Raw data points from a gaussian distribution to be fit.
+    n : int
+        Number of samples to bootstrap out of the original data
+    bins : int, or ndarray
+        Either the number of bins in a range or an array of bin edges for
+        histogramming the data.
+    range : tuple of scalars, shape (2,)
+        A tuple of scalar values defining the edge of the histogram range.  If
+        bins is not an integer, this value is ignored.  See numpy.histogram
+
+    Returns
+    -------
+    popt_mean : array
+        Array with 3 elements [a, mu, sigma] of the optimal fit.
+    popt_err : array
+        Array with 3 elements [a_err, mu_err, sigma_err], which is the standard
+        error of the optimal fit, calculated from the n bootstrapped samples.
+
+    Examples
+    --------
+    >>> data = 1.0 + 2 * np.random.randn(1000)
+    >>> pm, pe = miil.bootstrap_gauss_fit(data, 10, 100, (-5, 5))
+
+    """
+    groups = np.random.randint(n, size=data.size)
+    popts = np.zeros((n, 3))
+    popt = None
+
+    for ii in xrange(n):
+        counts, edges = np.histogram(data[groups == ii], bins=bins, range=range)
+        popt = fit_hist_gauss(counts, edges, popt)
+        popts[ii, :] = popt
+    popt_mean = np.mean(popts, axis=0)
+    popt_err = np.std(popts, axis=0, ddof=1) / np.sqrt(popts.shape[0])
+
+    return popt_mean, popt_err
+
 def eval_gauss_over_range(popt, n=100, range=None, edges=None):
     '''
     Evaluates a gaussian function over a range, traditionally from the output
