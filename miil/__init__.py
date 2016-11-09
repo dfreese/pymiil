@@ -257,7 +257,7 @@ def gauss_function(x, a, mu, sigma):
     return a * np.exp(-(x - mu)**2.0 / (2 * sigma**2))
 
 
-def fit_hist_gauss(n, edges):
+def fit_hist_gauss(n, edges, p0=None):
     '''
     Takes the output of a histogram and fits a gaussian function to it.
     Scipy curve_fit is uses in combination with gauss_function to do a
@@ -284,13 +284,15 @@ def fit_hist_gauss(n, edges):
     '''
     # find the centers of the bins
     centers = (edges[1:] + edges[:-1]) / 2.0
-    # Then do a weighted average of the centers to initialize the estimate of
-    # the mean
-    mean = np.average(centers, weights=n)
-    # Then do a weighted average to initialize the estimate of the variance
-    sigma = np.average((centers - mean)**2, weights=n)
-    p0 = [np.max(n), mean, sigma]
-    popt, _ = curve_fit(gauss_function, centers, n, p0=p0)
+    if p0 is None:
+        # If we're not given an initial guess, then do a weighted average of
+        # the centers to initialize the estimate of the mean
+        mean = np.average(centers, weights=n)
+        # Then do a weighted average to estimate the variance for sigma
+        sigma = np.sqrt(np.average((centers - mean) ** 2, weights=n))
+        p0 = [np.max(n), mean, sigma]
+    popt = curve_fit(gauss_function, centers, n, p0=p0,
+                     bounds=((0, -np.inf, 0), (np.inf, np.inf, np.inf)))[0]
     return popt
 
 
