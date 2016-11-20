@@ -227,6 +227,7 @@ def create_sparse_column_vector(data, size=None):
     shape = None
     if size is not None:
         shape = (int(size), 1)
+    data = np.asarray(data)
     data.sort()
     return csc_matrix((np.ones((len(data),), dtype=float),
                        (data.astype(int), np.zeros((len(data),), dtype=int))
