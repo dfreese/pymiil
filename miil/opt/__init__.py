@@ -3,7 +3,7 @@ from scipy.sparse.linalg.interface import aslinearoperator
 
 def mlem(y, A, no_iter, verbose=False,
          ret_iter_x=0, ret_iter_y=0, ret_norm_r=False, ret_objective=False,
-         AT_ones=None, x0=None):
+         AT_ones=None, x0=None, inverse_thres=0.0):
     '''
     Maximizes the log-likelihood for a Poisson Random Varible.  y is the
     observed poisson random variable, modeled by A * x.  Maximizes
@@ -39,6 +39,10 @@ def mlem(y, A, no_iter, verbose=False,
     x0 : (n,) array-like, optional
         Override the default model initialization.  Default is the number of
         counts in y, divided by n for each x0.
+    inverse_thres : float scalar
+        Zeros out small inverse values for the error propogation.  The inverse
+        of errors are backprojected with A^T.  Small model values can cause the
+        value to explode unnecessarily.
 
     Returns
     -------
@@ -126,6 +130,7 @@ def mlem(y, A, no_iter, verbose=False,
 
         error[model > 0] = y[model > 0] / model[model > 0]
         error[model <= 0] = 0
+        error[error > 1.0 / inverse_thres] = 0
 
         error_bp = A.rmatvec(error)
 
