@@ -56,20 +56,20 @@ def mlem(y, A, no_iter, verbose=False,
 
     '''
     A = aslinearoperator(A)
-    y = np.atleast_1d(np.asarray(y, dtype=float))
+    y = np.atleast_1d(np.asarray(y, dtype=A.dtype))
     if AT_ones is None:
         AT_ones = A.rmatvec(np.ones(A.shape[0]))
     else:
-        AT_ones = np.atleast_1d(np.asarray(AT_ones, dtype=float))
+        AT_ones = np.atleast_1d(np.asarray(AT_ones, dtype=A.dtype))
 
     if x0 is None:
         # Initialize it to uniform weights where the total counts would match
-        x = np.ones(A.shape[1]) * (y.sum() / A.shape[1])
+        x = np.ones(A.shape[1], dtype=A.dtype) * (y.sum() / A.shape[1])
     else:
-        x = np.atleast_1d(x0)
+        x = np.atleast_1d(np.asarray(x0, dtype=A.dtype))
 
-    error = np.zeros(A.shape[0])
-    update = np.zeros(A.shape[1])
+    error = np.zeros(A.shape[0], dtype=A.dtype)
+    update = np.zeros(A.shape[1], dtype=A.dtype)
     norm_y =  np.linalg.norm(y)
 
     # Save every history_idx iterations, and the last one
