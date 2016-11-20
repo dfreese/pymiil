@@ -55,7 +55,7 @@ def load_cuda_vox_shape(filename):
     fid = open(filename, 'rb')
     header = np.fromfile(fid, dtype=cuda_vox_file_header_dtype, count=1)[0]
     fid.close()
-    image_shape = (header['size'][0], header['size'][2], header['size'][1])
+    image_shape = (header['size'][0], header['size'][1], header['size'][2])
     return image_shape
 
 
