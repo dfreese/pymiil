@@ -60,20 +60,20 @@ def mlem(y, A, no_iter, verbose=False,
 
     '''
     A = aslinearoperator(A)
-    y = np.atleast_1d(np.asarray(y, dtype=A.dtype))
+    y = np.asarray(y, dtype=A.dtype).squeeze()
     if AT_ones is None:
         AT_ones = A.rmatvec(np.ones(A.shape[0]))
     else:
-        AT_ones = np.atleast_1d(np.asarray(AT_ones, dtype=A.dtype))
+        AT_ones = np.asarray(AT_ones, dtype=A.dtype).squeeze()
+        if AT_ones.shape != (A.shape[1],):
+            raise ValueError('AT_ones is not shaped (%d,)' % A.shape[1])
 
     if x0 is None:
         # Initialize it to uniform weights where the total counts would match
         x = np.ones(A.shape[1], dtype=A.dtype) * (y.sum() / A.shape[1])
     else:
-        x = np.atleast_1d(np.asarray(x0, dtype=A.dtype))
+        x = np.asarray(x0, dtype=A.dtype).squeeze()
 
-    error = np.zeros(A.shape[0], dtype=A.dtype)
-    update = np.zeros(A.shape[1], dtype=A.dtype)
     norm_y =  np.linalg.norm(y)
 
     # Save every history_idx iterations, and the last one
@@ -109,8 +109,9 @@ def mlem(y, A, no_iter, verbose=False,
         if verbose:
             print 'rel_norm = ', norm_r,
 
-        objective = model[model > 0].sum() - \
-                    (y[model > 0] * np.log(model[model > 0])).sum()
+        objective = model[model > 0].astype(np.float128).sum() - \
+                    (y[model > 0] * np.log(model[model > 0])
+                     ).astype(np.float128).sum()
         if verbose:
             print '  objective = ', objective
 
@@ -128,12 +129,15 @@ def mlem(y, A, no_iter, verbose=False,
         if iter_no == no_iter:
             continue
 
+        error = np.zeros(A.shape[0], dtype=A.dtype)
         error[model > 0] = y[model > 0] / model[model > 0]
         error[model <= 0] = 0
-        error[error > 1.0 / inverse_thres] = 0
+        if inverse_thres > 0:
+            error[error > 1.0 / inverse_thres] = 0
 
         error_bp = A.rmatvec(error)
 
+        update = np.zeros(A.shape[1], dtype=A.dtype)
         update[AT_ones > 0] = error_bp[AT_ones > 0] / AT_ones[AT_ones > 0]
         update[AT_ones <= 0] = 0
 
