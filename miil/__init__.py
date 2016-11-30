@@ -9,7 +9,7 @@ from miil.io import *
 from miil.mapping import *
 from miil.position import *
 from miil.opt import mlem
-
+from miil.plot import set_y_axis_order
 
 def tcal_coinc_events(
         events, tcal,
