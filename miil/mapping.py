@@ -354,3 +354,35 @@ def lor_to_slor_bins(lors, slor_shape=None, system_shape=None):
     slors = lor_to_slor(lors, slor_shape, system_shape)
     bins = np.bincount(slors, minlength=np.prod(slor_shape))
     return bins
+
+def valid_slors(slor_shape=None, keepdims=False):
+    '''
+    Returns a boolean mask based on the SLOR Shape that declares which SLOR bins
+    can have an LOR assigned to them, as some are invalid, but the full array
+    structure is maintained for simplicity.
+
+    default_slor_shape is used if system_shape is None.
+    '''
+    if slor_shape is None:
+        slor_shape = default_slor_shape
+
+    # The near y crystal, axis=3, must always be less than
+    near_far_condition = (
+        np.arange(slor_shape[3])[None, None, None, :, None] <=
+        np.arange(slor_shape[4])[None, None, None, None, :])
+
+    # The sum of the x local near crystal, axis=1, and the x difference,
+    # axis=2, must be less than the full width of the panel, which is
+    # represented by the size of the x difference dimension, axis=2.
+    panel_width_condition = (
+        (np.arange(slor_shape[2])[None, None, :, None, None] +
+         np.arange(slor_shape[1])[None, :, None, None, None]) < slor_shape[2])
+
+    valids = np.ones(slor_shape, dtype=bool)
+    valids &= near_far_condition
+    valids &= panel_width_condition
+
+    if keepdims:
+        return valids
+    else:
+        return valids.ravel()
