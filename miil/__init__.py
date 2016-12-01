@@ -10,6 +10,8 @@ from miil.mapping import *
 from miil.position import *
 from miil.opt import mlem
 from miil.plot import set_y_axis_order
+from miil.normalization import (
+    get_module_distribution, get_apd_distribution, get_crystal_distribution)
 
 def tcal_coinc_events(
         events, tcal,
