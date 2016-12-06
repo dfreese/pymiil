@@ -3,6 +3,278 @@
 import numpy as np
 from miil.defaults import default_system_shape, default_slor_shape
 
+
+def no_panels(system_shape=None):
+    """
+    Returns the number of panels for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return system_shape[0]
+
+
+def no_cartridges(system_shape=None):
+    """
+    Returns the number of cartridges for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[0:2])
+
+
+def no_fins(system_shape=None):
+    """
+    Returns the number of fins for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[0:3])
+
+
+def no_modules(system_shape=None):
+    """
+    Returns the number of modules for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[0:4])
+
+
+def no_apds(system_shape=None):
+    """
+    Returns the number of apds for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[0:5])
+
+
+def no_crystals(system_shape=None):
+    """
+    Returns the number of crystals for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape)
+
+
+def no_cartridges_per_panel(system_shape=None):
+    """
+    Returns the number of cartridges per panel for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[1:2])
+
+
+def no_fins_per_panel(system_shape=None):
+    """
+    Returns the number of fins per panel for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[1:3])
+
+
+def no_modules_per_panel(system_shape=None):
+    """
+    Returns the number of modules per panel for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[1:4])
+
+
+def no_apds_per_panel(system_shape=None):
+    """
+    Returns the number of apds per panel for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[1:5])
+
+
+def no_crystals_per_panel(system_shape=None):
+    """
+    Returns the number of crystals per panel for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[1:])
+
+
+def no_fins_per_cartridge(system_shape=None):
+    """
+    Returns the number of fins per cartridge for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[2:3])
+
+
+def no_modules_per_cartridge(system_shape=None):
+    """
+    Returns the number of modules per cartridge for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[2:4])
+
+
+def no_apds_per_cartridge(system_shape=None):
+    """
+    Returns the number of apds per cartridge for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[2:5])
+
+
+def no_crystals_per_cartridge(system_shape=None):
+    """
+    Returns the number of crystals per cartridge for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[2:])
+
+
+def no_modules_per_fin(system_shape=None):
+    """
+    Returns the number of modules per fin for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[3:4])
+
+
+def no_apds_per_fin(system_shape=None):
+    """
+    Returns the number of apds per fin for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[3:5])
+
+
+def no_crystals_per_fin(system_shape=None):
+    """
+    Returns the number of crystals per fin for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[3:])
+
+
+def no_apds_per_module(system_shape=None):
+    """
+    Returns the number of apds per module for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[4:5])
+
+
+def no_crystals_per_module(system_shape=None):
+    """
+    Returns the number of crystals per module for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(system_shape[4:])
+
+
+def no_crystals_per_apd(system_shape=None):
+    """
+    Returns the number of crystals per apd for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return system_shape[5]
+
+
+def no_lors(system_shape=None):
+    """
+    Returns the number of LORs for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return no_crystals_per_panel(system_shape) ** 2
+
+
+def slor_shape(system_shape=None):
+    """
+    Returns the SLOR shape for a given system shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    crystal_array_dim = int(np.sqrt(system_shape[5]))
+    slor_shape = [
+            no_fins_per_panel(system_shape),
+            crystal_array_dim,
+            crystal_array_dim * system_shape[3],
+            crystal_array_dim * system_shape[4],
+            crystal_array_dim * system_shape[4]
+            ]
+    return slor_shape
+
+
+def no_slors(system_shape=None):
+    """
+    Returns the number of SLORs for a given SLOR shape.
+    default_system_shape is used if system_shape is None.
+
+    """
+    if system_shape is None:
+        system_shape = default_system_shape
+    return np.prod(slor_shape(system_shape))
+
 # For Calibrated Events
 
 
@@ -386,3 +658,4 @@ def valid_slors(slor_shape=None, keepdims=False):
         return valids
     else:
         return valids.ravel()
+
