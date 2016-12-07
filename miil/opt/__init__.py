@@ -74,7 +74,7 @@ def mlem(y, A, no_iter, verbose=False,
     else:
         x = np.asarray(x0, dtype=A.dtype).squeeze()
 
-    norm_y =  np.linalg.norm(y)
+    norm_y = np.linalg.norm(y)
 
     # Save every history_idx iterations, and the last one
     save_model_idx = np.zeros(no_iter + 1, dtype=bool)
@@ -111,7 +111,7 @@ def mlem(y, A, no_iter, verbose=False,
 
         objective = model[model > 0].astype(np.float128).sum() - \
                     (y[model > 0] * np.log(model[model > 0])
-                     ).astype(np.float128).sum()
+                    ).astype(np.float128).sum()
         if verbose:
             print '  objective = ', objective
 

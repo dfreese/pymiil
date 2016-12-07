@@ -1,8 +1,16 @@
 #!/usr/bin/env python
 
 import numpy as np
-from miil.defaults import *
-from miil.mapping import get_crystals_from_lor
+from miil.defaults import (
+    default_system_shape, default_panel_sep, default_x_crystal_pitch,
+    default_y_crystal_pitch, default_x_module_pitch,
+    default_y_apd_pitch, default_y_apd_offset, default_z_pitch)
+from miil.mapping import (
+    get_crystals_from_lor, check_pcfmax, no_crystals,
+    no_cartridges_per_panel, no_fins_per_cartridge, no_modules_per_fin,
+    no_apds_per_module, no_crystals_per_apd,
+    no_crystals_per_panel, no_crystals_per_cartridge,
+    no_crystals_per_fin, no_crystals_per_module)
 
 
 def force_array(x, dtype=None):
@@ -17,7 +25,7 @@ def force_array(x, dtype=None):
 
 def get_position_pcfmax(
         panel, cartridge, fin, module, apd, crystal,
-        system_shape=default_system_shape,
+        system_shape=None,
         panel_sep=default_panel_sep,
         x_crystal_pitch=default_x_crystal_pitch,
         y_crystal_pitch=default_y_crystal_pitch,
@@ -27,7 +35,14 @@ def get_position_pcfmax(
         z_pitch=default_z_pitch):
     '''
     Calculates the position of a crystal based upon it's PCFMAX number.
+    default_system_shape is used if system_shape is None.
     '''
+    if system_shape is None:
+        system_shape = default_system_shape
+    index_valid = check_pcfmax(
+        panel, cartridge, fin, module, apd, crystal, system_shape)
+    if not index_valid:
+        raise ValueError('one or more values out of bounds')
 
     panel = force_array(panel, dtype=float)
     cartridge = force_array(cartridge, dtype=float)
@@ -35,19 +50,6 @@ def get_position_pcfmax(
     module = force_array(module, dtype=float)
     apd = force_array(apd, dtype=float)
     crystal = force_array(crystal, dtype=float)
-
-    if np.any(panel >= system_shape[0]):
-        raise ValueError('panel value out of range')
-    if np.any(cartridge >= system_shape[1]):
-        raise ValueError('cartridge value out of range')
-    if np.any(fin >= system_shape[2]):
-        raise ValueError('fin value out of range')
-    if np.any(module >= system_shape[3]):
-        raise ValueError('module value out of range')
-    if np.any(apd >= system_shape[4]):
-        raise ValueError('apd value out of range')
-    if np.any(crystal >= system_shape[5]):
-        raise ValueError('crystal value out of range')
 
     positions = np.zeros((len(panel), 3), dtype=float)
 
@@ -66,7 +68,8 @@ def get_position_pcfmax(
         (7 - crystal % 8 + 0.5) * y_crystal_pitch
 
     positions[:, 2] = z_pitch * (
-        0.5 + fin + system_shape[2] * (cartridge - system_shape[1] / 2.0))
+        0.5 + fin + no_fins_per_cartridge(system_shape) * (
+            cartridge - no_cartridges_per_panel(system_shape) / 2.0))
 
     positions[panel == 0, 1] *= -1
 
@@ -75,7 +78,7 @@ def get_position_pcfmax(
 
 def get_position_global_crystal(
         global_crystal_ids,
-        system_shape=default_system_shape,
+        system_shape=None,
         panel_sep=default_panel_sep,
         x_crystal_pitch=default_x_crystal_pitch,
         y_crystal_pitch=default_y_crystal_pitch,
@@ -83,9 +86,6 @@ def get_position_global_crystal(
         y_apd_pitch=default_y_apd_pitch,
         y_apd_offset=default_y_apd_offset,
         z_pitch=default_z_pitch):
-    if np.isscalar(global_crystal_ids):
-        global_crystal_ids = (global_crystal_ids,)
-    global_crystal_ids = np.asarray(global_crystal_ids, dtype=float)
     '''
     Get the crystal position based on the global crystal id number.  Does this
     by calling get_position_pcfmax.
@@ -94,24 +94,35 @@ def get_position_global_crystal(
     ----------
     global_crystal_ids : scalar or (n,) shaped ndarray
         Scalar or array of globabl crystal ids
+    system_shape : list like
+        List or array describing the shape of the system.
+        miil.default_system_shape is used if it is None.
 
     Returns
     -------
     p : (n,3) array
         x, y, z positions of the crystals.
     '''
-    if np.any(global_crystal_ids >= np.prod(system_shape)):
+    if system_shape is None:
+        system_shape = default_system_shape
+    global_crystal_ids = force_array(global_crystal_ids, dtype=float)
+
+    if np.any(global_crystal_ids >= no_crystals(system_shape)):
         raise ValueError('One or more crystal ids are out of range')
     elif np.any(global_crystal_ids < 0):
         raise ValueError('One or more crystal ids are out of range')
 
-    panel = global_crystal_ids // np.prod(system_shape[1:])
-    cartridge = global_crystal_ids // np.prod(
-        system_shape[2:]) % system_shape[1]
-    fin = global_crystal_ids // np.prod(system_shape[3:]) % system_shape[2]
-    module = global_crystal_ids // np.prod(system_shape[4:]) % system_shape[3]
-    apd = global_crystal_ids // np.prod(system_shape[5:]) % system_shape[4]
-    crystal = global_crystal_ids % system_shape[5]
+    panel = global_crystal_ids // no_crystals_per_panel(system_shape)
+    cartridge = (global_crystal_ids //
+                 no_crystals_per_cartridge(system_shape)) % \
+                    no_cartridges_per_panel(system_shape)
+    fin = (global_crystal_ids // no_crystals_per_fin(system_shape)) % \
+            no_fins_per_cartridge(system_shape)
+    module = (global_crystal_ids // no_crystals_per_module(system_shape)) % \
+            no_modules_per_fin(system_shape)
+    apd = (global_crystal_ids // no_crystals_per_apd(system_shape)) % \
+            no_apds_per_module(system_shape)
+    crystal = global_crystal_ids % no_crystals_per_apd(system_shape)
 
     return get_position_pcfmax(panel, cartridge, fin, module, apd, crystal,
                                system_shape, panel_sep, x_crystal_pitch,
@@ -121,7 +132,7 @@ def get_position_global_crystal(
 
 def get_positions_cal(
         events,
-        system_shape=default_system_shape,
+        system_shape=None,
         panel_sep=default_panel_sep,
         x_crystal_pitch=default_x_crystal_pitch,
         y_crystal_pitch=default_y_crystal_pitch,
@@ -137,12 +148,17 @@ def get_positions_cal(
     ----------
     events : (n,) shaped ndarray of eventcal_dtype
         Scalar or array of calibrated events
+    system_shape : list like
+        List or array describing the shape of the system.
+        miil.default_system_shape is used if it is None.
 
     Returns
     -------
     p : (n,3) array
         x, y, z positions of the crystals.
     '''
+    if system_shape is None:
+        system_shape = default_system_shape
     pos = get_position_pcfmax(
         events['panel'], events['cartridge'], events['fin'],
         events['module'], events['apd'], events['crystal'],
@@ -153,7 +169,7 @@ def get_positions_cal(
 
 def get_crystal_pos(
         events,
-        system_shape=default_system_shape,
+        system_shape=None,
         panel_sep=default_panel_sep,
         x_crystal_pitch=default_x_crystal_pitch,
         y_crystal_pitch=default_y_crystal_pitch,
@@ -169,6 +185,9 @@ def get_crystal_pos(
     ----------
     events : (n,) shaped ndarray of eventcoinc_dtype
         Scalar or array of coincidence events
+    system_shape : list like
+        List or array describing the shape of the system.
+        miil.default_system_shape is used if it is None.
 
     Returns
     -------
@@ -177,6 +196,8 @@ def get_crystal_pos(
     p1 : (n,3) array
         x, y, z positions of the right crystals.
     '''
+    if system_shape is None:
+        system_shape = default_system_shape
     pos0 = get_position_pcfmax(
         np.zeros(events.shape), events['cartridge0'], events['fin0'],
         events['module0'], events['apd0'], events['crystal0'],
@@ -194,7 +215,7 @@ def get_crystal_pos(
 
 def get_lor_positions(
         lors,
-        system_shape=default_system_shape,
+        system_shape=None,
         panel_sep=default_panel_sep,
         x_crystal_pitch=default_x_crystal_pitch,
         y_crystal_pitch=default_y_crystal_pitch,
@@ -210,6 +231,9 @@ def get_lor_positions(
     ----------
     lors : (n,) shaped ndarray
         Scalar or array of lor indices
+    system_shape : list like
+        List or array describing the shape of the system.
+        miil.default_system_shape is used if it is None.
 
     Returns
     -------
@@ -218,6 +242,8 @@ def get_lor_positions(
     p1 : (n,3) array
         x, y, z positions of the right crystals.
     '''
+    if system_shape is None:
+        system_shape = default_system_shape
     crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
     line_start = get_position_global_crystal(
         crystal0, system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,

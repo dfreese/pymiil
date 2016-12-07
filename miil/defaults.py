@@ -9,4 +9,4 @@ default_x_module_pitch = 0.405 * 25.4
 default_y_apd_pitch = (0.32 + 0.079) * 25.4
 default_y_apd_offset = 1.51
 default_z_pitch = 0.0565 * 25.4
-default_slor_shape = [24, 8, 128, 16, 16]
+

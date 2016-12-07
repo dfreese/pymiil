@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
-from miil.defaults import default_system_shape, default_slor_shape
+from miil.defaults import default_system_shape
 
 
 def no_panels(system_shape=None):
@@ -254,15 +254,14 @@ def slor_shape(system_shape=None):
     """
     if system_shape is None:
         system_shape = default_system_shape
-    crystal_array_dim = int(np.sqrt(system_shape[5]))
-    slor_shape = [
-            no_fins_per_panel(system_shape),
-            crystal_array_dim,
-            crystal_array_dim * system_shape[3],
-            crystal_array_dim * system_shape[4],
-            crystal_array_dim * system_shape[4]
-            ]
-    return slor_shape
+    crystal_array_dim = int(np.sqrt(no_crystals_per_apd(system_shape)))
+    shape = [
+        no_fins_per_panel(system_shape),
+        crystal_array_dim,
+        crystal_array_dim * no_modules_per_fin(system_shape),
+        crystal_array_dim * no_apds_per_module(system_shape),
+        crystal_array_dim * no_apds_per_module(system_shape)]
+    return shape
 
 
 def no_slors(system_shape=None):
@@ -288,7 +287,7 @@ def get_global_cartridge_number(events, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     global_cartridge = events['cartridge'].astype(int) + \
-        system_shape[1] * events['panel'].astype(int)
+        no_cartridges_per_panel(system_shape) * events['panel'].astype(int)
     return global_cartridge
 
 
@@ -302,7 +301,7 @@ def get_global_fin_number(events, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     global_cartridge = get_global_cartridge_number(events, system_shape)
-    global_fin = events['fin'] + system_shape[2] * global_cartridge
+    global_fin = events['fin'] + no_fins_per_cartridge(system_shape) * global_cartridge
     return global_fin
 
 
@@ -314,7 +313,7 @@ def get_global_module_number(events, system_shape=None):
     default_system_shape is used if system_shape is None.
     '''
     global_fin = get_global_fin_number(events, system_shape)
-    global_module = events['module'] + system_shape[3] * global_fin
+    global_module = events['module'] + no_modules_per_fin(system_shape) * global_fin
     return global_module
 
 
@@ -328,7 +327,7 @@ def get_global_apd_number(events, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     global_module = get_global_module_number(events, system_shape)
-    global_apd = events['apd'] + system_shape[4] * global_module
+    global_apd = events['apd'] + no_apds_per_module(system_shape) * global_module
     return global_apd
 
 
@@ -342,7 +341,7 @@ def get_global_crystal_number(events, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     global_apd = get_global_apd_number(events, system_shape)
-    global_crystal = events['crystal'] + system_shape[5] * global_apd
+    global_crystal = events['crystal'] + no_crystals_per_apd(system_shape) * global_apd
     return global_crystal
 
 # For Coincidence Events
@@ -358,7 +357,8 @@ def get_global_cartridge_numbers(events, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     global_cartridge0 = events['cartridge0'].astype(int)
-    global_cartridge1 = events['cartridge1'].astype(int) + system_shape[1]
+    global_cartridge1 = events['cartridge1'].astype(int) + \
+        no_cartridges_per_panel(system_shape)
     return global_cartridge0, global_cartridge1
 
 
@@ -374,8 +374,8 @@ def get_global_fin_numbers(events, system_shape=None):
         system_shape = default_system_shape
     global_cartridge0, global_cartridge1 = \
         get_global_cartridge_numbers(events, system_shape)
-    global_fin0 = events['fin0'] + system_shape[2] * global_cartridge0
-    global_fin1 = events['fin1'] + system_shape[2] * global_cartridge1
+    global_fin0 = events['fin0'] + no_fins_per_cartridge(system_shape) * global_cartridge0
+    global_fin1 = events['fin1'] + no_fins_per_cartridge(system_shape) * global_cartridge1
     return global_fin0, global_fin1
 
 
@@ -390,8 +390,8 @@ def get_global_module_numbers(events, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     global_fin0, global_fin1 = get_global_fin_numbers(events, system_shape)
-    global_module0 = events['module0'] + system_shape[3] * global_fin0
-    global_module1 = events['module1'] + system_shape[3] * global_fin1
+    global_module0 = events['module0'] + no_modules_per_fin(system_shape) * global_fin0
+    global_module1 = events['module1'] + no_modules_per_fin(system_shape) * global_fin1
     return global_module0, global_module1
 
 
@@ -407,8 +407,8 @@ def get_global_apd_numbers(events, system_shape=None):
         system_shape = default_system_shape
     global_module0, global_module1 = \
         get_global_module_numbers(events, system_shape)
-    global_apd0 = events['apd0'] + system_shape[4] * global_module0
-    global_apd1 = events['apd1'] + system_shape[4] * global_module1
+    global_apd0 = events['apd0'] + no_apds_per_module(system_shape) * global_module0
+    global_apd1 = events['apd1'] + no_apds_per_module(system_shape) * global_module1
     return global_apd0, global_apd1
 
 
@@ -423,8 +423,8 @@ def get_global_crystal_numbers(events, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     global_apd0, global_apd1 = get_global_apd_numbers(events, system_shape)
-    global_crystal0 = events['crystal0'] + system_shape[5] * global_apd0
-    global_crystal1 = events['crystal1'] + system_shape[5] * global_apd1
+    global_crystal0 = events['crystal0'] + no_crystals_per_apd(system_shape) * global_apd0
+    global_crystal1 = events['crystal1'] + no_crystals_per_apd(system_shape) * global_apd1
     return global_crystal0, global_crystal1
 
 
@@ -442,10 +442,9 @@ def get_global_lor_number(events, system_shape=None):
         system_shape = default_system_shape
     global_crystal0, global_crystal1 = \
         get_global_crystal_numbers(events, system_shape)
-    no_crystals_per_panel = np.prod(system_shape[1:])
 
-    return (global_crystal0 * no_crystals_per_panel) + \
-           (global_crystal1 - no_crystals_per_panel)
+    return (global_crystal0 * no_crystals_per_panel(system_shape)) + \
+           (global_crystal1 - no_crystals_per_panel(system_shape))
 
 
 def get_crystals_from_lor(lors, system_shape=None):
@@ -457,8 +456,9 @@ def get_crystals_from_lor(lors, system_shape=None):
     '''
     if system_shape is None:
         system_shape = default_system_shape
-    crystal0 = lors // np.prod(system_shape[1:])
-    crystal1 = lors % np.prod(system_shape[1:]) + np.prod(system_shape[1:])
+    crystal0 = lors // no_crystals_per_panel(system_shape)
+    crystal1 = lors % no_crystals_per_panel(system_shape) + \
+               no_crystals_per_panel(system_shape)
     return crystal0, crystal1
 
 
@@ -473,8 +473,8 @@ def get_apds_from_lor(lors, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
-    apd0 = crystal0 // system_shape[5]
-    apd1 = crystal1 // system_shape[5]
+    apd0 = crystal0 // no_crystals_per_apd(system_shape)
+    apd1 = crystal1 // no_crystals_per_apd(system_shape)
     return apd0, apd1
 
 
@@ -489,8 +489,8 @@ def get_modules_from_lor(lors, system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     apd0, apd1 = get_apds_from_lor(lors, system_shape)
-    module0 = apd0 // system_shape[4]
-    module1 = apd1 // system_shape[4]
+    module0 = apd0 // no_apds_per_module(system_shape)
+    module1 = apd1 // no_apds_per_module(system_shape)
     return module0, module1
 
 
@@ -503,20 +503,19 @@ def crystals_to_lor(crystal0, crystal1, system_shape=None, local_id=False):
     Lors are calculated as follows:
         lor = panel_crystal0 * no_crystals_per_panel + panel_crystal1
 
-    default_slor_shape is used if system_shape is None.
+    default_system_shape is used if system_shape is None.
     '''
     if system_shape is None:
         system_shape = default_system_shape
-    no_crystals_per_panel = np.prod(system_shape[1:])
     crystal0 = np.asarray(crystal0)
     crystal1 = np.asarray(crystal1)
     if not local_id:
-        crystal1 -= no_crystals_per_panel
-    lor = crystal0 * no_crystals_per_panel + crystal1
+        crystal1 -= no_crystals_per_panel(system_shape)
+    lor = crystal0 * no_crystals_per_panel(system_shape) + crystal1
     return lor
 
 
-def lor_to_slor(lors, slor_shape=None, system_shape=None):
+def lor_to_slor(lors, system_shape=None):
     '''
     Breaks down an array of LOR indices and transforms them into SLOR indices.
     SLORs, or symmetric LORs, is a way of indicating LORs that see the same
@@ -526,44 +525,40 @@ def lor_to_slor(lors, slor_shape=None, system_shape=None):
     Slors are effecitvely addressed by their place in a five dimensional array.
     [fin_diff][near_x][x_diff][near_y][far_y].
 
-    default_slor_shape is used if system_shape is None.
-
     default_system_shape is used if system_shape is None.
     '''
-    if slor_shape is None:
-        slor_shape = default_slor_shape
     if system_shape is None:
         system_shape = default_system_shape
+    slorshape = slor_shape(system_shape)
 
-    no_crystal_per_panel = np.prod(system_shape[1:])
-    crystals_per_fin = np.prod(system_shape[3:])
-    crystals_per_module = np.prod(system_shape[4:])
-    crystals_per_apd = system_shape[5]
+    crystal0 = lors // no_crystals_per_panel(system_shape)
+    crystal1 = lors % no_crystals_per_panel(system_shape)
 
-    crystal0 = lors // no_crystal_per_panel
-    crystal1 = lors % no_crystal_per_panel
-
-    fin0 = crystal0 // crystals_per_fin
-    fin1 = crystal1 // crystals_per_fin
+    fin0 = crystal0 // no_crystals_per_fin(system_shape)
+    fin1 = crystal1 // no_crystals_per_fin(system_shape)
     fin_diff = np.abs(fin0 - fin1)
     del fin0, fin1
-    if (fin_diff >= slor_shape[0]).any():
+    if (fin_diff >= slorshape[0]).any():
         raise ValueError("fin_diff out of range")
-    slors = fin_diff * slor_shape[1]
+    slors = fin_diff * slorshape[1]
     del fin_diff
 
-    apd0 = (crystal0 // crystals_per_apd) % system_shape[4]
-    apd1 = (crystal1 // crystals_per_apd) % system_shape[4]
+    apd0 = (crystal0 // no_crystals_per_apd(system_shape)) % \
+           no_apds_per_module(system_shape)
+    apd1 = (crystal1 // no_crystals_per_apd(system_shape)) % \
+           no_apds_per_module(system_shape)
 
-    y_crystal_near = 7 - (crystal0 % 8) + 8 * apd0;
-    y_crystal_far = 7 - (crystal1 % 8) + 8 * apd1;
+    y_crystal_near = 7 - (crystal0 % 8) + 8 * apd0
+    y_crystal_far = 7 - (crystal1 % 8) + 8 * apd1
     del apd0, apd1
 
-    x_local_crystal_near = (crystal0 % crystals_per_apd) // 8
-    x_local_crystal_far = 7 - (crystal1 % crystals_per_apd) // 8
+    x_local_crystal_near = (crystal0 % no_crystals_per_apd(system_shape)) // 8
+    x_local_crystal_far = 7 - (crystal1 % no_crystals_per_apd(system_shape)) // 8
 
-    module0 = (crystal0 // crystals_per_module) % system_shape[3]
-    module1 = (crystal1 // crystals_per_module) % system_shape[3]
+    module0 = (crystal0 // no_crystals_per_module(system_shape)) % \
+              no_modules_per_fin(system_shape)
+    module1 = (crystal1 // no_crystals_per_module(system_shape)) % \
+              no_modules_per_fin(system_shape)
     x_crystal_near = 8 * module0 + x_local_crystal_near
     x_crystal_far = 8 * module1 + x_local_crystal_far
     del module0, module1
@@ -573,7 +568,7 @@ def lor_to_slor(lors, slor_shape=None, system_shape=None):
             y_crystal_far[mirror_y], y_crystal_near[mirror_y].copy()
     x_crystal_near[mirror_y], x_crystal_far[mirror_y] = \
             x_crystal_far[mirror_y], x_crystal_near[mirror_y].copy()
-    x_local_crystal_near[mirror_y] =  x_local_crystal_far[mirror_y]
+    x_local_crystal_near[mirror_y] = x_local_crystal_far[mirror_y]
     del x_local_crystal_far
 
     mirror_x = x_crystal_near > x_crystal_far
@@ -581,76 +576,73 @@ def lor_to_slor(lors, slor_shape=None, system_shape=None):
     x_crystal_far[mirror_x] = 127 - x_crystal_far[mirror_x]
     x_local_crystal_near[mirror_x] = 7 - x_local_crystal_near[mirror_x]
 
-    if (x_local_crystal_near >= slor_shape[1]).any():
+    if (x_local_crystal_near >= slorshape[1]).any():
         raise ValueError("x_local_crystal_near out of range")
-    slors = (slors + x_local_crystal_near) * slor_shape[2]
+    slors = (slors + x_local_crystal_near) * slorshape[2]
     del x_local_crystal_near
 
     x_crystal_diff = x_crystal_far - x_crystal_near
     del x_crystal_far, x_crystal_near
 
-    if (x_crystal_diff >= slor_shape[2]).any():
+    if (x_crystal_diff >= slorshape[2]).any():
         raise ValueError("x_crystal_diff out of range")
-    slors = (slors + x_crystal_diff) * slor_shape[3]
+    slors = (slors + x_crystal_diff) * slorshape[3]
     del x_crystal_diff
 
-    if (y_crystal_near >= slor_shape[3]).any():
+    if (y_crystal_near >= slorshape[3]).any():
         raise ValueError("y_crystal_near out of range")
-    slors = (slors + y_crystal_near) * slor_shape[4]
+    slors = (slors + y_crystal_near) * slorshape[4]
     del y_crystal_near
 
-    if (y_crystal_far >= slor_shape[4]).any():
+    if (y_crystal_far >= slorshape[4]).any():
         raise ValueError("y_crystal_far out of range")
     slors += y_crystal_far
     del y_crystal_far
     return slors
 
 
-def lor_to_slor_bins(lors, slor_shape=None, system_shape=None):
+def lor_to_slor_bins(lors, system_shape=None):
     '''
     Converts LORs to SLORs using lor_to_slor and then bins them using
     numpy.bincount.
 
-    Returns an array, shape = (np.prod(slor_shape),), representing the number
-    of LORs with that SLOR index.
-
-    default_slor_shape is used if system_shape is None.
+    Returns an array, shape = (miil.no_slors(system_shape),), representing the
+    number of LORs with that SLOR index.
 
     default_system_shape is used if system_shape is None.
     '''
-    if slor_shape is None:
-        slor_shape = default_slor_shape
     if system_shape is None:
         system_shape = default_system_shape
 
-    slors = lor_to_slor(lors, slor_shape, system_shape)
-    bins = np.bincount(slors, minlength=np.prod(slor_shape))
+    slors = lor_to_slor(lors, system_shape)
+    bins = np.bincount(slors, minlength=no_slors(system_shape))
     return bins
 
-def valid_slors(slor_shape=None, keepdims=False):
+def valid_slors(system_shape=None, keepdims=False):
     '''
     Returns a boolean mask based on the SLOR Shape that declares which SLOR bins
     can have an LOR assigned to them, as some are invalid, but the full array
     structure is maintained for simplicity.
 
-    default_slor_shape is used if system_shape is None.
+    default_system_shape is used if system_shape is None.
     '''
-    if slor_shape is None:
-        slor_shape = default_slor_shape
+    if system_shape is None:
+        system_shape = default_system_shape
+    slorshape = slor_shape(system_shape)
 
     # The near y crystal, axis=3, must always be less than
     near_far_condition = (
-        np.arange(slor_shape[3])[None, None, None, :, None] <=
-        np.arange(slor_shape[4])[None, None, None, None, :])
+        np.arange(slorshape[3])[None, None, None, :, None] <=
+        np.arange(slorshape[4])[None, None, None, None, :])
 
     # The sum of the x local near crystal, axis=1, and the x difference,
     # axis=2, must be less than the full width of the panel, which is
     # represented by the size of the x difference dimension, axis=2.
     panel_width_condition = (
-        (np.arange(slor_shape[2])[None, None, :, None, None] +
-         np.arange(slor_shape[1])[None, :, None, None, None]) < slor_shape[2])
+        (np.arange(slorshape[2])[None, None, :, None, None] +
+         np.arange(slorshape[1])[None, :, None, None, None]) < slorshape[2])
 
-    valids = np.ones(slor_shape, dtype=bool)
+    valids = np.ones(slorshape, dtype=bool)
     valids &= near_far_condition
     valids &= panel_width_condition
 
@@ -659,3 +651,28 @@ def valid_slors(slor_shape=None, keepdims=False):
     else:
         return valids.ravel()
 
+def check_pcfmax(
+        panel=None, cartridge=None, fin=None, module=None,
+        apd=None, crystal=None, system_shape=None):
+    '''
+    Checks if the numbers are valid given the system shape
+    default_system_shape is used if system_shape is None.
+    '''
+    if system_shape is None:
+        system_shape = default_system_shape
+
+    panel = np.asarray(panel)
+    cartridge = np.asarray(cartridge)
+    fin = np.asarray(fin)
+    module = np.asarray(module)
+    apd = np.asarray(apd)
+    crystal = np.asarray(crystal)
+    result = (panel >= 0).all() & (cartridge >= 0).all() & \
+            (fin >= 0).all() & (module >= 0).all() & (apd >= 0).all() & \
+            (crystal >= 0).all() & (panel < no_panels(system_shape)).all() & \
+            (cartridge < no_cartridges_per_panel(system_shape)).all() & \
+            (fin < no_fins_per_cartridge(system_shape)).all() & \
+            (module < no_modules_per_fin(system_shape)).all() & \
+            (apd < no_apds_per_module(system_shape)).all() & \
+            (crystal < no_crystals_per_apd(system_shape)).all()
+    return result
