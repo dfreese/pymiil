@@ -47,31 +47,36 @@ try:
         def _forward_project(self, image, lors, weight=None,
                              crystal_weights=None, slor_weights=None):
             lors = np.asarray(lors, dtype=np.int64)
-            if weight is None:
-                weight = np.ones(lors.size, dtype=np.float32)
-            else:
+            if weight is not None:
                 weight = np.asarray(weight, dtype=np.float32)
             c0, c1 = miil.get_crystals_from_lor(lors, self.system_shape)
             if crystal_weights is not None:
                 crystal_weights = np.asarray(crystal_weights)
-                weight *= crystal_weights[c0] * crystal_weights[c1]
+                if weight is None:
+                    weight = crystal_weights[c0] * crystal_weights[c1]
+                else:
+                    weight *= crystal_weights[c0] * crystal_weights[c1]
             if slor_weights is not None:
                 slor_weights = np.asarray(slor_weights)
                 slor_idx = miil.lor_to_slor(lors)
-                weight *= slor_weights[slor_idx]
-            lines = projection.Lines(c0, c1, self.crystal_pos, weight=weight)
+                if weight is None:
+                    weight = slor_weights[slor_idx]
+                else:
+                    weight *= slor_weights[slor_idx]
+            lines = projection.Lines(c0, c1, self.crystal_pos.astype(np.float32), weight=weight)
             return self.projection.forward_project(lines, image)
 
         def forward_project(self, image, lors=None, weight=None,
                             crystal_weights=None, slor_weights=None,
                             subset_size=40000000, return_val=True,
                             return_slors=False, return_crystals=False):
+            image = np.ascontiguousarray(image, dtype=np.float32)
             if not return_val and not return_crystals and not return_slors:
                 raise ValueError('No output selected')
             if lors is None:
                 no_lors = miil.no_lors(self.system_shape)
             else:
-                lors = np.asarray(lors, dtype=np.int64)
+                lors = np.ascontiguousarray(lors, dtype=np.int64)
                 no_lors = lors.size
             no_crystals = miil.no_crystals(self.system_shape)
             no_slors = miil.no_slors(self.system_shape)
@@ -89,8 +94,7 @@ try:
                     raise RuntimeError('''Number of weights is not equal to
                                        the number of LORs''')
             start_idxs = np.arange(0, no_lors, subset_size)
-            end_idxs = np.minimum(
-                np.arange(0, no_lors, subset_size) + subset_size, no_lors)
+            end_idxs = np.minimum((start_idxs + subset_size), no_lors)
             for start_idx, end_idx in zip(start_idxs, end_idxs):
                 if lors is None:
                     local_lors = np.arange(start_idx, end_idx)
@@ -118,6 +122,7 @@ try:
                                                minlength=no_crystals)
                     crystal_val += np.bincount(c1, weights=val,
                                                minlength=no_crystals)
+
             out = []
             if return_val:
                 out.append(lor_val)
@@ -154,7 +159,7 @@ try:
             if lors is None:
                 no_lors = miil.no_lors(self.system_shape)
             else:
-                lors = np.asarray(lors, dtype=np.int64)
+                lors = np.ascontiguousarray(lors, dtype=np.int64)
                 no_lors = lors.size
 
             if value is not None:
@@ -163,13 +168,15 @@ try:
                     raise RuntimeError('''Number of values is not equal to
                                        the number of LORs''')
             if crystal_weights is not None:
-                crystal_weights = np.asarray(crystal_weights, dtype=np.float64)
+                crystal_weights = np.ascontiguousarray(crystal_weights,
+                                                       dtype=np.float64)
                 if crystal_weights.size != miil.no_crystals(self.system_shape):
                     raise RuntimeError('''Number of crystal weights is not
                                        equal to the number of crystals''')
 
             if slor_weights is not None:
-                slor_weights = np.asarray(slor_weights, dtype=np.float64)
+                slor_weights = np.ascontiguousarray(slor_weights,
+                                                    dtype=np.float64)
                 if slor_weights.size != miil.no_slors(self.system_shape):
                     raise RuntimeError('''Number of slor weights is not equal
                                        to the number of slors''')
