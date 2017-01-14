@@ -49,7 +49,7 @@ try:
             lors = np.asarray(lors, dtype=np.int64)
             if weight is not None:
                 weight = np.asarray(weight, dtype=np.float32)
-            c0, c1 = miil.get_crystals_from_lor(lors, self.system_shape)
+            c0, c1 = miil.lor_to_crystals(lors, self.system_shape)
             if crystal_weights is not None:
                 crystal_weights = np.asarray(crystal_weights)
                 if weight is None:
@@ -116,8 +116,7 @@ try:
                     slor_val += np.bincount(slor_idx, weights=val,
                                             minlength=no_slors)
                 if return_crystals:
-                    c0, c1 = miil.get_crystals_from_lor(local_lors,
-                                                        self.system_shape)
+                    c0, c1 = miil.lor_to_crystals(local_lors, self.system_shape)
                     crystal_val += np.bincount(c0, weights=val,
                                                minlength=no_crystals)
                     crystal_val += np.bincount(c1, weights=val,
@@ -143,7 +142,7 @@ try:
                 value = np.ones(lors.size)
             else:
                 value = np.asarray(value)
-            c0, c1 = miil.get_crystals_from_lor(lors, self.system_shape)
+            c0, c1 = miil.lor_to_crystals(lors, self.system_shape)
             if crystal_weights is not None:
                 crystal_weights = np.asarray(crystal_weights)
                 value *= crystal_weights[c0] * crystal_weights[c1]

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import warnings
 import numpy as np
 from miil.defaults import default_system_shape
 
@@ -277,7 +278,7 @@ def no_slors(system_shape=None):
 # For Calibrated Events
 
 
-def get_global_cartridge_number(events, system_shape=None):
+def cal_to_cartridge(events, system_shape=None):
     '''
     Takes eventcal_dtype events and returns the global catridge number for each
     event given system_shape.
@@ -291,24 +292,36 @@ def get_global_cartridge_number(events, system_shape=None):
     return global_cartridge
 
 
-def get_global_fin_number(events, system_shape=None):
+def get_global_cartridge_number(events, system_shape=None):
+    warnings.warn('miil.get_global_cartridge_number() changed to miil.cal_to_cartridge()',
+                  DeprecationWarning, stacklevel=2)
+    return cal_to_cartridge(events, system_shape=system_shape)
+
+
+def cal_to_fin(events, system_shape=None):
     '''
     Takes eventcal_dtype events and returns the global fin number for each
-    event given system_shape.  Uses get_global_cartridge_number as a base.
+    event given system_shape.  Uses cal_to_cartridge as a base.
 
     default_system_shape is used if system_shape is None.
     '''
     if system_shape is None:
         system_shape = default_system_shape
-    global_cartridge = get_global_cartridge_number(events, system_shape)
+    global_cartridge = cal_to_cartridge(events, system_shape)
     global_fin = events['fin'] + no_fins_per_cartridge(system_shape) * global_cartridge
     return global_fin
 
 
-def get_global_module_number(events, system_shape=None):
+def get_global_fin_number(events, system_shape=None):
+    warnings.warn('miil.get_global_fin_number() changed to miil.cal_to_fin()',
+                  DeprecationWarning, stacklevel=2)
+    return cal_to_fin(events, system_shape=system_shape)
+
+
+def cal_to_module(events, system_shape=None):
     '''
     Takes eventcal_dtype events and returns the global module number for each
-    event given system_shape.  Uses get_global_fin_number as a base.
+    event given system_shape.  Uses cal_to_fin as a base.
 
     default_system_shape is used if system_shape is None.
     '''
@@ -317,37 +330,55 @@ def get_global_module_number(events, system_shape=None):
     return global_module
 
 
-def get_global_apd_number(events, system_shape=None):
+def get_global_module_number(events, system_shape=None):
+    warnings.warn('miil.get_global_module_number() changed to miil.cal_to_module()',
+                  DeprecationWarning, stacklevel=2)
+    return cal_to_module(events, system_shape=system_shape)
+
+
+def cal_to_apd(events, system_shape=None):
     '''
     Takes eventcal_dtype events and returns the global apd number for each
-    event given system_shape.  Uses get_global_module_number as a base.
+    event given system_shape.  Uses cal_to_module as a base.
 
     default_system_shape is used if system_shape is None.
     '''
     if system_shape is None:
         system_shape = default_system_shape
-    global_module = get_global_module_number(events, system_shape)
+    global_module = cal_to_module(events, system_shape)
     global_apd = events['apd'] + no_apds_per_module(system_shape) * global_module
     return global_apd
 
 
-def get_global_crystal_number(events, system_shape=None):
+def get_global_apd_number(events, system_shape=None):
+    warnings.warn('miil.get_global_apd_number() changed to miil.cal_to_apd()',
+                  DeprecationWarning, stacklevel=2)
+    return cal_to_apd(events, system_shape=system_shape)
+
+
+def cal_to_crystal(events, system_shape=None):
     '''
     Takes eventcal_dtype events and returns the global crystal number for each
-    event given system_shape.  Uses get_global_apd_number as a base.
+    event given system_shape.  Uses cal_to_apd as a base.
 
     default_system_shape is used if system_shape is None.
     '''
     if system_shape is None:
         system_shape = default_system_shape
-    global_apd = get_global_apd_number(events, system_shape)
+    global_apd = cal_to_apd(events, system_shape)
     global_crystal = events['crystal'] + no_crystals_per_apd(system_shape) * global_apd
     return global_crystal
+
+
+def get_global_crystal_number(events, system_shape=None):
+    warnings.warn('miil.get_global_crystal_number() changed to miil.cal_to_crystal()',
+                  DeprecationWarning, stacklevel=2)
+    return cal_to_crystal(events, system_shape=system_shape)
 
 # For Coincidence Events
 
 
-def get_global_cartridge_numbers(events, system_shape=None):
+def coinc_to_cartridges(events, system_shape=None):
     '''
     Takes eventcoinc_dtype events and returns the left and right global
     cartridge number for each event given system_shape.
@@ -362,11 +393,17 @@ def get_global_cartridge_numbers(events, system_shape=None):
     return global_cartridge0, global_cartridge1
 
 
-def get_global_fin_numbers(events, system_shape=None):
+def get_global_cartridge_numbers(events, system_shape=None):
+    warnings.warn('miil.get_global_cartridge_numbers() changed to miil.coinc_to_cartridges()',
+                  DeprecationWarning, stacklevel=2)
+    return coinc_to_cartridges(events, system_shape=system_shape)
+
+
+def coinc_to_fins(events, system_shape=None):
     '''
     Takes eventcoinc_dtype events and returns the left and right global
     fin number for each event given system_shape.  Uses
-    get_global_cartridge_numbers as a base.
+    coinc_to_cartridges as a base.
 
     default_system_shape is used if system_shape is None.
     '''
@@ -379,11 +416,17 @@ def get_global_fin_numbers(events, system_shape=None):
     return global_fin0, global_fin1
 
 
-def get_global_module_numbers(events, system_shape=None):
+def get_global_fin_numbers(events, system_shape=None):
+    warnings.warn('miil.get_global_fin_numbers() changed to miil.coinc_to_fins()',
+                  DeprecationWarning, stacklevel=2)
+    return coinc_to_fins(events, system_shape=system_shape)
+
+
+def coinc_to_modules(events, system_shape=None):
     '''
     Takes eventcoinc_dtype events and returns the left and right global
     module number for each event given system_shape.  Uses
-    get_global_fin_numbers as a base.
+    coinc_to_fins as a base.
 
     default_system_shape is used if system_shape is None.
     '''
@@ -395,11 +438,17 @@ def get_global_module_numbers(events, system_shape=None):
     return global_module0, global_module1
 
 
-def get_global_apd_numbers(events, system_shape=None):
+def get_global_module_numbers(events, system_shape=None):
+    warnings.warn('miil.get_global_module_numbers() changed to miil.coinc_to_modules()',
+                  DeprecationWarning, stacklevel=2)
+    return coinc_to_modules(events, system_shape=system_shape)
+
+
+def coinc_to_apds(events, system_shape=None):
     '''
     Takes eventcoinc_dtype events and returns the left and right global
     apd number for each event given system_shape.  Uses
-    get_global_module_numbers as a base.
+    coinc_to_modules as a base.
 
     default_system_shape is used if system_shape is None.
     '''
@@ -412,7 +461,13 @@ def get_global_apd_numbers(events, system_shape=None):
     return global_apd0, global_apd1
 
 
-def get_global_crystal_numbers(events, system_shape=None):
+def get_global_apd_numbers(events, system_shape=None):
+    warnings.warn('miil.get_global_apd_numbers() changed to miil.coinc_to_apds()',
+                  DeprecationWarning, stacklevel=2)
+    return coinc_to_apds(events, system_shape=system_shape)
+
+
+def coinc_to_crystals(events, system_shape=None):
     '''
     Takes eventcoinc_dtype events and returns the left and right global
     crystal number for each event given system_shape.  Uses
@@ -428,10 +483,16 @@ def get_global_crystal_numbers(events, system_shape=None):
     return global_crystal0, global_crystal1
 
 
-def get_global_lor_number(events, system_shape=None):
+def get_global_crystal_numbers(events, system_shape=None):
+    warnings.warn('miil.get_global_crystal_numbers() changed to miil.coinc_to_crystals()',
+                  DeprecationWarning, stacklevel=2)
+    return coinc_to_crystals(events, system_shape=system_shape)
+
+
+def coinc_to_lor(events, system_shape=None):
     '''
     Takes eventcoinc_dtype events and returns the global lor number for each
-    event given system_shape.  Uses get_global_crystal_numbers as a base.
+    event given system_shape.  Uses coinc_to_crystals as a base.
     Global lor calculated as:
         (global_crystal0 * no_crystals_per_panel) +
         (global_crystal1 - no_crystals_per_panel)
@@ -447,7 +508,13 @@ def get_global_lor_number(events, system_shape=None):
            (global_crystal1 - no_crystals_per_panel(system_shape))
 
 
-def get_crystals_from_lor(lors, system_shape=None):
+def get_global_lor_number(events, system_shape=None):
+    warnings.warn('miil.get_global_lor_number() changed to miil.coinc_to_lor()',
+                  DeprecationWarning, stacklevel=2)
+    return coinc_to_crystals(events, system_shape=system_shape)
+
+
+def lor_to_crystals(lors, system_shape=None):
     '''
     Takes an array of lor indices and returns the left and right global crystal
     number based on the given system shape.
@@ -462,36 +529,70 @@ def get_crystals_from_lor(lors, system_shape=None):
     return crystal0, crystal1
 
 
-def get_apds_from_lor(lors, system_shape=None):
+def get_crystals_from_lor(lors, system_shape=None):
+    warnings.warn('miil.get_crystals_from_lor() changed to miil.lor_to_crystals()',
+                  DeprecationWarning, stacklevel=2)
+    return lor_to_crystals(lors, system_shape=system_shape)
+
+
+def lor_to_apds(lors, system_shape=None):
     '''
     Takes an array of lor indices and returns the left and right global apd
-    number based on the given system shape.  Uses get_crystals_from_lor as a
-    base for calculation.
+    number based on the given system shape.  Uses lor_to_crystals as a base for
+    calculation.
 
     default_system_shape is used if system_shape is None.
     '''
     if system_shape is None:
         system_shape = default_system_shape
-    crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
+    crystal0, crystal1 = lor_to_crystals(lors, system_shape)
     apd0 = crystal0 // no_crystals_per_apd(system_shape)
     apd1 = crystal1 // no_crystals_per_apd(system_shape)
     return apd0, apd1
 
 
-def get_modules_from_lor(lors, system_shape=None):
+def get_apds_from_lor(lors, system_shape=None):
+    warnings.warn('miil.get_apds_from_lor() changed to miil.lor_to_apds()',
+                  DeprecationWarning, stacklevel=2)
+    return lor_to_apds(lors, system_shape=system_shape)
+
+
+def lor_to_modules(lors, system_shape=None):
     '''
     Takes an array of lor indices and returns the left and right global module
-    number based on the given system shape.  Uses get_apds_from_lor as a base
+    number based on the given system shape.  Uses lor_to_crystals as a base for
+    calculation.
+
+    default_system_shape is used if system_shape is None.
+    '''
+    if system_shape is None:
+        system_shape = default_system_shape
+    crystal0, crystal1 = lor_to_crystals(lors, system_shape)
+    module0 = crystal0 // no_crystals_per_module(system_shape)
+    module1 = crystal1 // no_crystals_per_module(system_shape)
+    return module0, module1
+
+
+def get_modules_from_lor(lors, system_shape=None):
+    warnings.warn('miil.get_modules_from_lor() changed to miil.lor_to_modules()',
+                  DeprecationWarning, stacklevel=2)
+    return lor_to_modules(lors, system_shape=system_shape)
+
+
+def lor_to_fins(lors, system_shape=None):
+    '''
+    Takes an array of lor indices and returns the left and right global fin
+    numbers based on the given system shape.  Uses lor_to_crystals as a base
     for calculation.
 
     default_system_shape is used if system_shape is None.
     '''
     if system_shape is None:
         system_shape = default_system_shape
-    apd0, apd1 = get_apds_from_lor(lors, system_shape)
-    module0 = apd0 // no_apds_per_module(system_shape)
-    module1 = apd1 // no_apds_per_module(system_shape)
-    return module0, module1
+    crystal0, crystal1 = lor_to_crystals(lors, system_shape)
+    fin0 = crystal0 // no_crystals_per_fin(system_shape)
+    fin1 = crystal1 // no_crystals_per_fin(system_shape)
+    return fin0, fin1
 
 
 def crystals_to_lor(crystal0, crystal1, system_shape=None, local_id=False):

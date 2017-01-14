@@ -195,11 +195,11 @@ def get_crystal_distribution(
     """
     no_crystals_per_system = np.prod(miil.default_system_shape)
     if isinstance(vec, csc_matrix):
-        crystal0, crystal1 = miil.get_crystals_from_lor(
+        crystal0, crystal1 = miil.lor_to_crystals(
             vec.indices, miil.default_system_shape)
         counts = vec.data.copy()
     else:
-        crystal0, crystal1 = miil.get_crystals_from_lor(
+        crystal0, crystal1 = miil.lor_to_crystals(
             vec, miil.default_system_shape)
         counts = np.ones((len(vec),))
 
@@ -225,11 +225,11 @@ def get_apd_distribution(
     """
     no_apds_per_system = np.prod(miil.default_system_shape[:-1])
     if isinstance(vec, csc_matrix):
-        apd0, apd1 = miil.get_apds_from_lor(
+        apd0, apd1 = miil.lor_to_apds(
             vec.indices, miil.default_system_shape)
         counts = vec.data.copy()
     else:
-        apd0, apd1 = miil.get_apds_from_lor(
+        apd0, apd1 = miil.lor_to_apds(
             vec, miil.default_system_shape)
         counts = np.ones((len(vec),))
 
@@ -255,11 +255,11 @@ def get_module_distribution(
     """
     no_modules_per_system = np.prod(miil.default_system_shape[:-2])
     if isinstance(vec, csc_matrix):
-        module0, module1 = miil.get_modules_from_lor(
+        module0, module1 = miil.lor_to_modules(
             vec.indices, miil.default_system_shape)
         counts = vec.data.copy()
     else:
-        module0, module1 = miil.get_modules_from_lor(
+        module0, module1 = miil.lor_to_modules(
             vec, miil.default_system_shape)
         counts = np.ones((len(vec),))
 
@@ -368,7 +368,7 @@ def correct_lors(
                 lors, lyso_center0, lyso_size0, lyso_center1, lyso_size1,
                 lyso_atten_coef, packing_frac)
     if weights is not None:
-        crystal0, crystal1 = miil.get_crystals_from_lor(
+        crystal0, crystal1 = miil.lor_to_crystals(
             vec.indices, miil.default_system_shape)
         vec.data *= weights[crystal0]
         vec.data *= weights[crystal1]

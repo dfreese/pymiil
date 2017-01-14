@@ -6,7 +6,7 @@ from miil.defaults import (
     default_y_crystal_pitch, default_x_module_pitch,
     default_y_apd_pitch, default_y_apd_offset, default_z_pitch)
 from miil.mapping import (
-    get_crystals_from_lor, check_pcfmax, no_crystals,
+    lor_to_crystals, check_pcfmax, no_crystals,
     no_cartridges_per_panel, no_fins_per_cartridge, no_modules_per_fin,
     no_apds_per_module, no_crystals_per_apd,
     no_crystals_per_panel, no_crystals_per_cartridge,
@@ -256,7 +256,7 @@ def get_lor_positions(lors, system_shape=None, pos_params=None, **kwargs):
         system_shape = default_system_shape
     if pos_params is None:
         pos_params = PositionParams(**kwargs)
-    crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
+    crystal0, crystal1 = lor_to_crystals(lors, system_shape)
     line_start = get_position_global_crystal(
         crystal0, system_shape, pos_params)
     line_end = get_position_global_crystal(
