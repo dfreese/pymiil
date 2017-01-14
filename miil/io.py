@@ -260,3 +260,10 @@ def load_uv_period(filename):
     '''
     uv_freq = load_uv_freq(filename)
     return 1.0 / uv_freq
+
+def load_lors(filename):
+    '''
+    Load an lor list file.  Primarily a convinience function to not have to
+    remember int64.
+    '''
+    return np.fromfile(filename, dtype=np.int64)
