@@ -236,8 +236,7 @@ def create_sparse_column_vector(data, size=None):
                        (data.astype(int), np.zeros((len(data),), dtype=int))
                       ), shape=shape)
 
-
-def gauss_function(x, a, mu, sigma):
+def gauss_function(x, a, mu, sigma, dc_offset=0.0):
     '''
     Evaluate a gaussian of mean mu, std of sigma, and amplitude a at a point x.
     Primarily used for fitting histograms.
@@ -252,16 +251,18 @@ def gauss_function(x, a, mu, sigma):
         Mean of the gaussian
     sigma : scalar
         Standard deviation of the gaussian
+    dc_offset : scalar
+        a baseline offset to add to the entire function
 
     Returns
     -------
     val : array or scalar
         gauss(x) = a * exp(-(x - mu)**2 / (2 * sigma**2))
     '''
-    return a * np.exp(-(x - mu)**2.0 / (2 * sigma**2))
+    return a * np.exp(-(x - mu)**2.0 / (2 * sigma**2)) + dc_offset
 
 
-def fit_hist_gauss(n, edges, p0=None):
+def fit_hist_gauss(n, edges, p0=None, dc_offset=False):
     '''
     Takes the output of a histogram and fits a gaussian function to it.
     Scipy curve_fit is uses in combination with gauss_function to do a
@@ -274,11 +275,16 @@ def fit_hist_gauss(n, edges, p0=None):
         Array of bin values from histogramming a set of data.
     edges : ndarray
         Array of bin edges from histogramming a set of data.
+    p0 : array
+        Initial guess of parameters for the fit [a, mu, sigma]
+    dc_offset : bool
+        If a dc_offset should be added to the fit
 
     Returns
     -------
     popt : array
         Array with 3 elements [a, mu, sigma] of the optimal fit.
+        Is 4 elements [a, mu, sigma, offset] if dc_offset is true.
 
     Examples
     --------
@@ -294,13 +300,19 @@ def fit_hist_gauss(n, edges, p0=None):
         mean = np.average(centers, weights=n)
         # Then do a weighted average to estimate the variance for sigma
         sigma = np.sqrt(np.average((centers - mean) ** 2, weights=n))
-        p0 = [np.max(n), mean, sigma]
-    popt = curve_fit(gauss_function, centers, n, p0=p0,
-                     bounds=((0, -np.inf, 0), (np.inf, np.inf, np.inf)))[0]
+        offset = (n[0] + n[-1]) / 2.0
+        if dc_offset:
+            p0 = [np.max(n), mean, sigma, offset]
+        else:
+            p0 = [np.max(n), mean, sigma]
+    bounds = ((0, -np.inf, 0), (np.inf, np.inf, np.inf))
+    if dc_offset:
+        bounds = ((0, -np.inf, 0, 0), (np.inf, np.inf, np.inf, np.max(n)))
+    popt = curve_fit(gauss_function, centers, n, p0=p0, bounds=bounds)[0]
     return popt
 
 
-def bootstrap_gauss_fit(data, n, bins, range=None):
+def bootstrap_gauss_fit(data, n, bins, range=None, dc_offset=False):
     """
     Take points from data, split them into n groups randomly, then histogram
     them across range with bins number of bins.
@@ -317,14 +329,19 @@ def bootstrap_gauss_fit(data, n, bins, range=None):
     range : tuple of scalars, shape (2,)
         A tuple of scalar values defining the edge of the histogram range.  If
         bins is not an integer, this value is ignored.  See numpy.histogram
+    dc_offset : bool
+        If a dc_offset should be added to the fit
 
     Returns
     -------
     popt_mean : array
         Array with 3 elements [a, mu, sigma] of the optimal fit.
+        Is 4 elements [a, mu, sigma, offset] if dc_offset is true.
     popt_err : array
         Array with 3 elements [a_err, mu_err, sigma_err], which is the standard
         error of the optimal fit, calculated from the n bootstrapped samples.
+        Is 4 elements [a_err, mu_err, sigma_err, offset_err] if dc_offset is
+        true.
 
     Examples
     --------
@@ -334,11 +351,13 @@ def bootstrap_gauss_fit(data, n, bins, range=None):
     """
     groups = np.random.randint(n, size=data.size)
     popts = np.zeros((n, 3))
+    if dc_offset:
+        popts = np.zeros((n, 4))
     popt = None
 
     for ii in xrange(n):
         counts, edges = np.histogram(data[groups == ii], bins=bins, range=range)
-        popt = fit_hist_gauss(counts, edges, popt)
+        popt = fit_hist_gauss(counts, edges, popt, dc_offset)
         popts[ii, :] = popt
     popt_mean = np.mean(popts, axis=0)
     popt_err = np.std(popts, axis=0, ddof=1) / np.sqrt(popts.shape[0])
