@@ -2,7 +2,15 @@
 
 import warnings
 import numpy as np
-from miil.defaults import default_system_shape
+from miil.defaults import (default_system_shape, default_system_shape_pcdrm)
+
+
+def _check_pcdrmax_shape(shape):
+    """
+
+    """
+    if len(shape) != 7:
+        raise RuntimeError('(%s) has invalid length for PCDRMAX shape' % ','.join((str(x) for x in shape)))
 
 
 def no_panels(system_shape=None):
@@ -71,6 +79,30 @@ def no_crystals(system_shape=None):
     return np.prod(system_shape)
 
 
+def no_daqs(system_shape_pcdrm=None):
+    """
+    Returns the number of daq (4-up) boards for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[0:3])
+
+
+def no_renas(system_shape_pcdrm=None):
+    """
+    Returns the number of renas for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[0:4])
+
+
 def no_cartridges_per_panel(system_shape=None):
     """
     Returns the number of cartridges per panel for a given system shape.
@@ -126,6 +158,30 @@ def no_crystals_per_panel(system_shape=None):
     return np.prod(system_shape[1:])
 
 
+def no_daqs_per_panel(system_shape_pcdrm=None):
+    """
+    Returns the number of daq (4-up) boards per panel for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[1:3])
+
+
+def no_renas_per_panel(system_shape_pcdrm=None):
+    """
+    Returns the number of renas per panel for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[1:4])
+
+
 def no_fins_per_cartridge(system_shape=None):
     """
     Returns the number of fins per cartridge for a given system shape.
@@ -168,6 +224,116 @@ def no_crystals_per_cartridge(system_shape=None):
     if system_shape is None:
         system_shape = default_system_shape
     return np.prod(system_shape[2:])
+
+
+def no_daqs_per_cartridge(system_shape_pcdrm=None):
+    """
+    Returns the number of daq (4-up) boards per cartridge for a given system
+    shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[2:3])
+
+
+def no_renas_per_cartridge(system_shape_pcdrm=None):
+    """
+    Returns the number of renas per cartridge for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[2:4])
+
+
+def no_renas_per_daq(system_shape_pcdrm=None):
+    """
+    Returns the number of renas per daq board (4-up) for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[3:4])
+
+
+def no_modules_per_daq(system_shape_pcdrm=None):
+    """
+    Returns the number of modules per daq (4-up) board for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[3:5])
+
+
+def no_apds_per_daq(system_shape_pcdrm=None):
+    """
+    Returns the number of apds per daq (4-up) board for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[3:6])
+
+
+def no_crystals_per_daq(system_shape_pcdrm=None):
+    """
+    Returns the number of crystlas per daq (4-up) board for a given system
+    shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[3:7])
+
+
+def no_modules_per_rena(system_shape_pcdrm=None):
+    """
+    Returns the number of modules per rena for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[4:5])
+
+
+def no_apds_per_rena(system_shape_pcdrm=None):
+    """
+    Returns the number of apds per rena for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[4:6])
+
+
+def no_crystals_per_rena(system_shape_pcdrm=None):
+    """
+    Returns the number of crystals per rena for a given system shape.
+    default_system_shape_pcdrm is used if system_shape_pcdrm is None.
+
+    """
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+    _check_pcdrmax_shape(system_shape_pcdrm)
+    return np.prod(system_shape_pcdrm[4:7])
 
 
 def no_modules_per_fin(system_shape=None):
@@ -762,18 +928,96 @@ def check_pcfmax(
     if system_shape is None:
         system_shape = default_system_shape
 
-    panel = np.asarray(panel)
-    cartridge = np.asarray(cartridge)
-    fin = np.asarray(fin)
-    module = np.asarray(module)
-    apd = np.asarray(apd)
-    crystal = np.asarray(crystal)
-    result = (panel >= 0).all() & (cartridge >= 0).all() & \
-            (fin >= 0).all() & (module >= 0).all() & (apd >= 0).all() & \
-            (crystal >= 0).all() & (panel < no_panels(system_shape)).all() & \
-            (cartridge < no_cartridges_per_panel(system_shape)).all() & \
-            (fin < no_fins_per_cartridge(system_shape)).all() & \
-            (module < no_modules_per_fin(system_shape)).all() & \
-            (apd < no_apds_per_module(system_shape)).all() & \
-            (crystal < no_crystals_per_apd(system_shape)).all()
-    return result
+    valid = True
+    if panel is not None:
+        panel = np.asarray(panel)
+        valid |= (panel >= 0).all()
+        valid |= (panel < no_panels(system_shape)).all()
+    if cartridge is not None:
+        cartridge = np.asarray(cartridge)
+        valid |= (cartridge >= 0).all()
+        valid |= (cartridge < no_cartridges_per_panel(system_shape)).all()
+    if fin is not None:
+        fin = np.asarray(fin)
+        valid |= (fin >= 0).all()
+        valid |= (fin < no_fins_per_cartridge(system_shape)).all()
+    if module is not None:
+        module = np.asarray(module)
+        valid |= (module >= 0).all()
+        valid |= (module < no_modules_per_fin(system_shape)).all()
+    if apd is not None:
+        apd = np.asarray(apd)
+        valid |= (apd >= 0).all()
+        valid |= (apd < no_apds_per_module(system_shape)).all()
+    if crystal is not None:
+        crystal = np.asarray(crystal)
+        valid |= (crystal >= 0).all()
+        valid |= (crystal < no_crystals_per_apd(system_shape)).all()
+
+    return valid
+
+
+def pcfm_to_pcdrm(
+        panel, cartridge, fin, module,
+        system_shape_pcfm=None, system_shape_pcdrm=None):
+    """
+
+    """
+
+    if system_shape_pcfm is None:
+        system_shape_pcfm = default_system_shape
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+
+    if not check_pcfmax(panel, cartridge, fin, module):
+        raise RuntimeError('Invalid values for system shape')
+
+    modules_per_rena = no_modules_per_rena(system_shape_pcdrm)
+    renas_per_daq = no_renas_per_daq(system_shape_pcdrm)
+
+    rena = (
+        2 * ((no_fins_per_cartridge(system_shape_pcfm) - 1 - fin) // 2) + 
+        1 * ((panel == 0) & (module % 8 >= modules_per_rena)) +
+        1 * ((panel == 1) & (module % 8 < modules_per_rena))
+        )
+    rena_local_module = (
+        (module % modules_per_rena) * (panel == 0) +
+        (modules_per_rena - 1 - (module % modules_per_rena)) * (panel == 1)
+        )
+    daq = (
+        2 * ((panel == 0) & (fin % 2) & (renas_per_daq > 2)) +
+        1 * ((panel == 0) & (module >= 8)) +
+        2 * ((panel == 1) & ((fin % 2) == 0) & (renas_per_daq > 2)) +
+        1 * ((panel == 1) & (module < 8))
+        )
+    return daq, rena, rena_local_module
+
+def pcdrm_to_pcfm(
+        panel, cartridge, daq, rena, rena_local_module,
+        system_shape_pcfm=None, system_shape_pcdrm=None):
+    """
+
+    """
+
+    if system_shape_pcfm is None:
+        system_shape_pcfm = default_system_shape
+    if system_shape_pcdrm is None:
+        system_shape_pcdrm = default_system_shape_pcdrm
+
+    module = (
+        rena_local_module +
+        no_modules_per_rena(system_shape_pcdrm) * (rena % 2) +
+        no_modules_per_fin(system_shape_pcfm) / 2 * (daq % 2)
+        )
+    module[panel == 1] = (
+        no_modules_per_fin(system_shape_pcfm) - 1 - module[panel == 1]
+        )
+
+    renas_per_daq = no_renas_per_daq(system_shape_pcdrm)
+
+    fin = (
+        no_fins_per_cartridge(system_shape_pcfm) - 1 - 2 * (rena // 2) +
+        -1 * ((panel == 0) & (daq < 2) & (renas_per_daq > 2)) +
+        -1 * ((panel == 1) & (daq >= 2) & (renas_per_daq > 2))
+        )
+    return fin, module
