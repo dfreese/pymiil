@@ -10,3 +10,4 @@ default_x_module_pitch = 0.405 * 25.4
 default_y_apd_pitch = (0.32 + 0.079) * 25.4
 default_y_apd_offset = 1.51
 default_z_pitch = 0.0565 * 25.4
+default_uv_period_ns = 1024.41

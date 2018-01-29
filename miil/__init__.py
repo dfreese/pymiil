@@ -13,6 +13,7 @@ from miil.plot import set_y_axis_order
 from miil.normalization import (
     get_module_distribution, get_apd_distribution, get_crystal_distribution)
 from miil.recon import BreastPETSystemMatrix
+import miil.cal
 
 def tcal_coinc_events(
         events, tcal,
