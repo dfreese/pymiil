@@ -4,8 +4,8 @@ from scipy.sparse.linalg import lsmr, lsqr
 import miil
 
 def cal_time(data, system_shape=None, edep_type='linear',
-        xtal_thres=None, apd_thres=None, fwhm_exp=16.0,
-        xtal_global=False):
+        xtal_thres=None, apd_thres=None, admm_iter=5, admm_rho=None,
+        admm_invrho=None, admm_fwhm_exp=16.0, xtal_global=False):
     """
     Implementation of the method in "Robust Timing Calibration for PET Using
     L1-Norm Minimization" by Freese, Hsu, Innes, and Levin, 2017.  This
@@ -28,7 +28,18 @@ def cal_time(data, system_shape=None, edep_type='linear',
         respectively.
     apd_thres : int or tuple
         Same as xtal_thres for apds.
-    fwhm_exp : float (Default = 16.0 ns)
+    admm_iter: int (Default = 5)
+        The number of iterations of ADMM to run on the fit to transform a
+        least squares fit to a l1-norm fit.
+    admm_rho: int (Default = None)
+        Directly specify the rho parameter used by the ADMM algorithm.  If it
+        is not specified, then it is estimated from admm_fwhm_exp and the
+        estimated number of randoms. Always overrides admm_fwhm_exp and
+        admm_invrho.
+    admm_invrho: int (Default = None)
+        Specify the rho parameter used by the ADMM algorithm by setting its
+        inverse.  This is in the same units as 'dtf' which is nanoseconds.
+    admm_fwhm_exp : float (Default = 16.0 ns)
         The expected timing resolution, in ns FWHM, of the calibrated
         distribution.  This is used to estimate the rho parameter fed into
         miil.opt.lad.
@@ -91,47 +102,66 @@ def cal_time(data, system_shape=None, edep_type='linear',
 
     if edep_type == 'linear':
         A = csr_matrix((np.hstack((c_vals[c0], c_vals[c1],
+            a_vals[a0], a_vals[a1],
             (data['E0'] - 511.0) * a_vals[a0],
             (data['E1'] - 511.0) * a_vals[a1])), (
                 np.hstack((np.arange(data.size),)*4),
                 np.hstack((c0, c1,
                     a0 + miil.no_crystals(system_shape),
-                    a1 + miil.no_crystals(system_shape)))
+                    a1 + miil.no_crystals(system_shape),
+                    a0 + 2 * miil.no_crystals(system_shape),
+                    a1 + 2 * miil.no_crystals(system_shape)))
                 )))
     elif edep_type == 'log':
         A = csr_matrix((
             np.hstack((c_vals[c0], c_vals[c1],
+                       a_vals[a0], a_vals[a1],
                        (np.log(data['E0']) - np.log(511.0)) * a_vals[a0],
                        (np.log(data['E1']) - np.log(511.0)) * a_vals[a1])),
             (
                 np.hstack((np.arange(data.size),)*4),
                 np.hstack((c0, c1,
                     a0 + miil.no_crystals(system_shape),
-                    a1 + miil.no_crystals(system_shape)))
+                    a1 + miil.no_crystals(system_shape),
+                    a0 + 2 * miil.no_crystals(system_shape),
+                    a1 + 2 * miil.no_crystals(system_shape)))
                 )))
     else:
         raise ValueError('edep_type of {0} not supported. Only linear or log'.format(edep_type))
 
-    no_bins = 100
-    n_raw, edge_raw = np.histogram(data['dtf'], bins=no_bins)
-    rand_est = np.mean((n_raw[0], n_raw[-1])) * no_bins
-    rand_frac_est = rand_est / np.sum(n_raw)
-    print('Estimated randoms fraction: {0:0.1f}%'.format(rand_frac_est * 100))
+    if admm_rho is None:
+        if admm_invrho is not None:
+            admm_rho = 1.0 / admm_invrho
+    else:
+        admm_invrho = 1.0 / admm_rho
 
-    time_window = np.abs(edge_raw[0] - edge_raw[-1])
-    sigma_exp = fwhm_exp / 2.35
-    t_opt_est = sigma_exp * np.sqrt(-2 * np.log(sigma_exp * rand_frac_est * np.sqrt(2 * np.pi) /
-        ((1 - rand_frac_est) * 2.0 * time_window)))
-    rho_opt_est = 1.0 / t_opt_est
-    print('Estimated optimum rho: {0:0.3g}, corresponds to {1:0.1f}ns'.format(rho_opt_est, t_opt_est))
+    if admm_rho is None:
+        no_bins = 100
+        n_raw, edge_raw = np.histogram(data['dtf'], bins=no_bins)
+        rand_est = np.mean((n_raw[0], n_raw[-1])) * no_bins
+        rand_frac_est = rand_est / np.sum(n_raw)
+        print('Estimated randoms fraction: {0:0.1f}%'.format(rand_frac_est * 100))
 
-    no_iter = 5
-    print('Running {0} iterations of admm for l1-norm fit on {1} events'.format(no_iter, c0.size))
+        time_window = np.abs(edge_raw[0] - edge_raw[-1])
+        sigma_exp = admm_fwhm_exp / 2.35
+        admm_invrho = sigma_exp
+        if rand_frac_est > 0:
+            admm_invrho *= np.sqrt(-2 * np.log(sigma_exp * rand_frac_est * np.sqrt(2 * np.pi) /
+                ((1 - rand_frac_est) * 2.0 * time_window)))
+        else:
+            admm_invrho = time_window
+        admm_rho = 1.0 / admm_invrho
+
+    print('Using rho: {0:0.3g}, corresponds to {1:0.1f}ns'.format(admm_rho, admm_invrho))
+    print('Running {0} iterations of admm for l1-norm fit on {1} events'.format(admm_iter, c0.size))
     x = miil.opt.lad(A, data['dtf'],
-            rho_opt_est, alpha=1.0, no_iter=no_iter, abstol=1e-1, reltol=1e-2)
+            admm_rho, alpha=1.0, no_iter=admm_iter, abstol=1e-1, reltol=1e-2)
     tcal = np.empty(miil.no_crystals(system_shape), dtype=miil.tcal_dtype)
-    tcal['offset'] = x[:miil.no_crystals(system_shape)]
-    tcal['edep_offset'] = np.repeat(x[miil.no_crystals(system_shape):],
+    no_crystals = miil.no_crystals(system_shape)
+    tcal['offset'] = x[:no_crystals]
+    tcal['offset'] += np.repeat(x[no_crystals:(2 * no_crystals)],
+            miil.no_crystals_per_apd(system_shape))
+    tcal['edep_offset'] = np.repeat(x[(2 * no_crystals):],
             miil.no_crystals_per_apd(system_shape))
 
     return tcal
