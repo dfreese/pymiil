@@ -57,6 +57,9 @@ def cal_time(data, system_shape=None, edep_type='linear',
     """
     if system_shape is None:
         system_shape = miil.default_system_shape
+    no_crystals = miil.no_crystals(system_shape)
+    no_apds = miil.no_apds(system_shape)
+
     if xtal_global:
         c0 = data['crystal0']
         c1 = data['crystal1']
@@ -107,10 +110,10 @@ def cal_time(data, system_shape=None, edep_type='linear',
             (data['E1'] - 511.0) * a_vals[a1])), (
                 np.hstack((np.arange(data.size),) * 6),
                 np.hstack((c0, c1,
-                    a0 + miil.no_crystals(system_shape),
-                    a1 + miil.no_crystals(system_shape),
-                    a0 + 2 * miil.no_crystals(system_shape),
-                    a1 + 2 * miil.no_crystals(system_shape)))
+                    a0 + no_crystals,
+                    a1 + no_crystals,
+                    a0 + no_crystals + no_apds,
+                    a1 + no_crystals + no_apds))
                 )))
     elif edep_type == 'log':
         A = csr_matrix((
@@ -121,10 +124,10 @@ def cal_time(data, system_shape=None, edep_type='linear',
             (
                 np.hstack((np.arange(data.size),) * 6),
                 np.hstack((c0, c1,
-                    a0 + miil.no_crystals(system_shape),
-                    a1 + miil.no_crystals(system_shape),
-                    a0 + 2 * miil.no_crystals(system_shape),
-                    a1 + 2 * miil.no_crystals(system_shape)))
+                    a0 + no_crystals,
+                    a1 + no_crystals,
+                    a0 + no_crystals + no_apds,
+                    a1 + no_crystals + no_apds))
                 )))
     else:
         raise ValueError('edep_type of {0} not supported. Only linear or log'.format(edep_type))
@@ -157,11 +160,10 @@ def cal_time(data, system_shape=None, edep_type='linear',
     x = miil.opt.lad(A, data['dtf'],
             admm_rho, alpha=1.0, no_iter=admm_iter, abstol=1e-1, reltol=1e-2)
     tcal = np.empty(miil.no_crystals(system_shape), dtype=miil.tcal_dtype)
-    no_crystals = miil.no_crystals(system_shape)
     tcal['offset'] = x[:no_crystals]
-    tcal['offset'] += np.repeat(x[no_crystals:(2 * no_crystals)],
+    tcal['offset'] += np.repeat(x[no_crystals:(no_apds + no_crystals)],
             miil.no_crystals_per_apd(system_shape))
-    tcal['edep_offset'] = np.repeat(x[(2 * no_crystals):],
+    tcal['edep_offset'] = np.repeat(x[(no_apds + no_crystals):],
             miil.no_crystals_per_apd(system_shape))
 
     return tcal
