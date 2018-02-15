@@ -243,7 +243,10 @@ def get_lor_positions(lors, system_shape=None, pos_params=None, **kwargs):
         miil.default_system_shape is used if it is None.
     pos_params: PositionParams class
         A class describing the system positioning.  A default class is created
-        if it is none.  Any additional kwargs are passed to the constructor.
+        if it is none.
+    kwargs:
+        If pos_params is none, these are passed as arguments to make the
+        PositionParams class.  They are ignored if pos_params is not none.
 
     Returns
     -------

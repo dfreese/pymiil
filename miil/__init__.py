@@ -62,10 +62,7 @@ def tcal_coinc_events(
 
 
 def create_listmode_data(
-        events,
-        system_shape=default_system_shape,
-        panel_sep=default_panel_sep,
-        list_type=0):
+        events, list_type=0, system_shape=None, pos_params=None, **kwargs):
     '''
     Creates an array of list mode data in either cudarecon_type0_vec_dtype or
     cudarecon_type1_vec_dtype from eventcoinc data by calling get_crystal_pos.
@@ -74,25 +71,39 @@ def create_listmode_data(
     ----------
     events : (n,) shaped ndarray of eventcoinc_dtype
         Scalar or array of coincidence events
+    system_shape : list like
+        List or array describing the shape of the system.
+        miil.default_system_shape is used if it is None.
+    pos_params: PositionParams class
+        A class describing the system positioning.  A default class is created
+        if it is none.
+    kwargs:
+        If pos_params is none, these are passed as arguments to make the
+        PositionParams class.  They are ignored if pos_params is not none.
 
     Returns
     -------
     events : (n,) shaped ndarray of cudarecon_type[0,1]_vec_dtype
         Scalar or array of list mode data for cudarecon.
     '''
+    if system_shape is None:
+        system_shape = default_system_shape
+    if pos_params is None:
+        pos_params = PositionParams(**kwargs)
     dtype = cudarecon_type0_vec_dtype
     if list_type == 1:
         dtype = cudarecon_type1_vec_dtype
 
     lm_data = np.zeros(events.shape, dtype=dtype)
     lm_data['pos0'], lm_data['pos1'] = get_crystal_pos(
-        events, system_shape=system_shape, panel_sep=panel_sep)
+        events, system_shape=system_shape, pos_params=pos_params)
+    if list_type == 1:
+        lm_data['weight'][:] = 1.0
     return lm_data
 
 
 def create_listmode_from_vec(
-        vec, panel_sep=default_panel_sep,
-        system_shape=default_system_shape):
+        vec, system_shape=None, pos_params=None, **kwargs):
     '''
     Creates an array of list mode data in cudarecon_type1_vec_dtype from
     a sparse column vector representing the counts on each lor.
@@ -101,49 +112,74 @@ def create_listmode_from_vec(
     ----------
     vec : (n,1) csc_matrix
         sparse column matrix of lor counts
+    system_shape : list like
+        List or array describing the shape of the system.
+        miil.default_system_shape is used if it is None.
+    pos_params: PositionParams class
+        A class describing the system positioning.  A default class is created
+        if it is none.
+    kwargs:
+        If pos_params is none, these are passed as arguments to make the
+        PositionParams class.  They are ignored if pos_params is not none.
 
     Returns
     -------
     events : (n,) shaped ndarray of cudarecon_type1_vec_dtype
         Scalar or array of list mode data for cudarecon.
     '''
+    if system_shape is None:
+        system_shape = default_system_shape
+    if pos_params is None:
+        pos_params = PositionParams(**kwargs)
     lm_data = np.zeros((vec.nnz,), dtype=cudarecon_type1_vec_dtype)
     lm_data['pos0'], lm_data['pos1'] = get_lor_positions(vec.indices,
                                                          system_shape,
-                                                         panel_sep)
+                                                         pos_params)
     lm_data['weight'] = vec.data.copy()
     return lm_data
 
 
 def create_listmode_from_lors(
-        lors,
-        panel_sep=default_panel_sep,
-        system_shape=default_system_shape,
-        list_type=0):
+        lors, list_type=0, system_shape=None, pos_params=None, **kwargs):
     '''
     Creates an array of list mode data in cudarecon_type[0,1]_vec_dtype from
     an array of lor indices.  Calls get_lor_positions.
 
     Parameters
     ----------
-    vec : (n,1) csc_matrix
-        sparse column matrix of lor counts
+    lors: (n,) np.ndarry
+        Array of lor indices.
     list_type : scalar
         indicates cudarecon_type.  values 0 and 1 indicate
         cudarecon_type0_vec_dtype and cudarecon_type1_vec_dtype respectively.
+    system_shape : list like
+        List or array describing the shape of the system.
+        miil.default_system_shape is used if it is None.
+    pos_params: PositionParams class
+        A class describing the system positioning.  A default class is created
+        if it is none.
+    kwargs:
+        If pos_params is none, these are passed as arguments to make the
+        PositionParams class.  They are ignored if pos_params is not none.
 
     Returns
     -------
     events : (n,) shaped ndarray of cudarecon_type[0,1]_vec_dtype
         Scalar or array of list mode data for cudarecon.
     '''
+    if system_shape is None:
+        system_shape = default_system_shape
+    if pos_params is None:
+        pos_params = PositionParams(**kwargs)
     dtype = cudarecon_type0_vec_dtype
     if list_type == 1:
         dtype = cudarecon_type1_vec_dtype
 
     lm_data = np.zeros(lors.shape, dtype=dtype)
     lm_data['pos0'], lm_data['pos1'] = get_lor_positions(
-        lors, system_shape, panel_sep)
+        lors, system_shape, pos_params)
+    if list_type == 1:
+        lm_data['weight'][:] = 1.0
     return lm_data
 
 
