@@ -677,7 +677,7 @@ def coinc_to_lor(events, system_shape=None):
 def get_global_lor_number(events, system_shape=None):
     warnings.warn('miil.get_global_lor_number() changed to miil.coinc_to_lor()',
                   DeprecationWarning, stacklevel=2)
-    return coinc_to_crystals(events, system_shape=system_shape)
+    return coinc_to_lor(events, system_shape=system_shape)
 
 
 def lor_to_crystals(lors, system_shape=None):
@@ -976,7 +976,7 @@ def pcfm_to_pcdrm(
     renas_per_daq = no_renas_per_daq(system_shape_pcdrm)
 
     rena = (
-        2 * ((no_fins_per_cartridge(system_shape_pcfm) - 1 - fin) // 2) + 
+        2 * ((no_fins_per_cartridge(system_shape_pcfm) - 1 - fin) // 2) +
         1 * ((panel == 0) & (module % 8 >= modules_per_rena)) +
         1 * ((panel == 1) & (module % 8 < modules_per_rena))
         )
