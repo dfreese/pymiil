@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
 
 class FixedOrderFormatter(ScalarFormatter):
@@ -20,6 +19,10 @@ class FixedOrderFormatter(ScalarFormatter):
         self.orderOfMagnitude = self._order_of_mag
 
 def set_y_axis_order(order, visible=False):
+    # only import pyplot if we need this.  If the backend isn't setup right
+    # then importing it can cause errors, and I don't want to figure out
+    # the appropriate way to handle that right now.
+    import matplotlib.pyplot as plt
     y_ax = plt.gca().yaxis
     y_ax.set_major_formatter(FixedOrderFormatter(order))
     # Set whether the order of magnitude offset is visible or not
