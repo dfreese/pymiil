@@ -415,9 +415,61 @@ def solid_angle_triangle(a, b, c):
         norm_a * np.inner(b, c)
     return 2 * np.arctan(np.abs(numerator) / np.abs(denom))
 
+def michellogram_space(p1, p2):
+    """
+    Transforms two detector coordinates (x,y,z) into a angles, theta
+    and phi, and a displacement, d.  Theta = phi = 0 is the x axis.
+    The range of theta is [-pi/2, pi/2) from negative y to positive y.
+    The range of phi is also [-pi/2, pi/2) from -z to z.
 
-def main():
-    return
 
-if __name__ == '__main__':
-    main()
+    Parameters
+    ----------
+    p1 : (n,3) or (3,n) array-like
+        First end point of the LOR in (x,y,z)
+    p2 : (n,3) or (3,n) array-like
+        end point of the LOR in (x,y,z)
+
+    Returns
+    -------
+    d : (n,) ndarray
+        The displacement of the line of response
+    theta : (n,) ndarray
+        The angle, theta, of the line of response.  Theta is the angle in the
+        XY plane.
+    phi : (n,) ndarray
+        The angle, phi, of the line of response.  Phi is the angle from the XY
+        plane.
+
+    """
+    p1 = np.atleast_2d(np.asarray(p1, dtype=float))
+    p2 = np.atleast_2d(np.asarray(p2, dtype=float))
+    if p1.shape[1] != 3:
+        p1 = p1.T
+    if p2.shape[1] != 3:
+        p2 = p2.T
+
+    # Based off of the vector formulation here:
+    # https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+    delta = p1 - p2
+    length = np.linalg.norm(delta, axis=1, keepdims=True)
+    delta /= length;
+
+    # emulate a dot product for each of the vectors
+    s = p1 - delta * (p1 * delta).sum(axis=1, keepdims=True)
+    theta = np.arctan2(s[:, 1], s[:, 0])
+    phi = np.arctan2(
+        s[:, 2], np.linalg.norm(delta[:, :2], axis=1))
+    d = np.linalg.norm(s, axis=1)
+
+    # Force the output to be theta = [-pi/2, pi/2)
+    too_neg = (theta < -np.pi / 2)
+    too_pos = (theta >= np.pi / 2)
+    d[too_neg] *= -1
+    phi[too_neg] *= -1
+    theta[too_neg] += np.pi
+    d[too_pos] *= -1
+    phi[too_pos] *= -1
+    theta[too_pos] -= np.pi
+    return d, theta, phi
+
