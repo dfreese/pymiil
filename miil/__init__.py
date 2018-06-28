@@ -2,20 +2,20 @@ import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.optimize import curve_fit
 
-from miil.version import __version__
-from miil.defaults import *
-from miil.types import *
-from miil.io import *
-from miil.mapping import *
-from miil.position import *
-from miil.opt import mlem
-from miil.plot import set_y_axis_order
-from miil.normalization import (
+from .version import __version__
+from .defaults import *
+from .types import *
+from .io import *
+from .mapping import *
+from .position import *
+from .opt import mlem
+from .plot import set_y_axis_order
+from .normalization import (
     get_module_distribution, get_apd_distribution, get_crystal_distribution,
     michellogram_space,
     )
-from miil.recon import BreastPETSystemMatrix
-import miil.cal
+from .recon import BreastPETSystemMatrix
+from .cal import *
 
 def tcal_coinc_events(
         events, tcal,

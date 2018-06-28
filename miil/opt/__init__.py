@@ -102,19 +102,16 @@ def mlem(y, A, no_iter, verbose=False,
     history_count_model = 0
 
     for iter_no in xrange(no_iter + 1):
-        if verbose:
-            print '%02d: ' % (iter_no),
         model = A.matvec(x)
 
         norm_r = np.linalg.norm(model - y) / norm_y
-        if verbose:
-            print 'rel_norm = ', norm_r,
 
         objective = model[model > 0].astype(np.float128).sum() - \
                     (y[model > 0] * np.log(model[model > 0])
                     ).astype(np.float128).sum()
         if verbose:
-            print '  objective = ', objective
+            print('{0:02d}: rel_norm = {1},  objective = {2}'.format(
+                iter_no, norm_r, objective))
 
         if save_x_idx[iter_no]:
             x_history[history_count_x, :] = x.copy()
@@ -267,8 +264,9 @@ def lad(A, b, rho,
         history['lsmr']['normx'] = np.zeros(no_iter)
 
     if verbose:
-        print '%3s\t%10s\t%10s\t%10s\t%10s\t%10s' % (
-            'iter', 'r norm', 'eps pri', 's norm', 'eps dual', 'objective')
+        pass
+        # print '%3s\t%10s\t%10s\t%10s\t%10s\t%10s' % (
+        #    'iter', 'r norm', 'eps pri', 's norm', 'eps dual', 'objective')
 
     for iter_no in range(no_iter):
         q = b + z - u
@@ -324,8 +322,9 @@ def lad(A, b, rho,
             break
 
         if verbose:
-            print '%3s\t%10s\t%10s\t%10s\t%10s\t%10s' % (
-                iter_no, r_norm, eps_prim, s_norm, eps_dual, objval)
+            pass
+            # print '%3s\t%10s\t%10s\t%10s\t%10s\t%10s' % (
+            #     iter_no, r_norm, eps_prim, s_norm, eps_dual, objval)
 
     if ret_hist:
         return x, history
